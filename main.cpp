@@ -9,7 +9,7 @@
 #include "document.h"
 #include "tokenizer.h"
 #include "inverted_index.h"
-// #include "suffix_array.h" // TODO: Uncomment if/when suffix array support is implemented
+#include "suffix_array.h"
 #include "performance.h"
 #include "utils.h"
 
@@ -65,7 +65,7 @@ int main() {
 
     std::vector<Document> docs;        // Stores all loaded documents.
     InvertedIndex invIndex;            // Inverted index for fast keyword/phrase searching.
-    // SuffixArray saIndex;            // TODO: Uncomment if/when suffix array support is implemented.
+    SuffixArray saIndex;               // Suffix array to store suffixes of documents.
     bool indexed = false;              // Tracks whether documents have been indexed.
 
     // Main program loop: displays menu and handles user choices.
@@ -87,15 +87,14 @@ int main() {
             invIndex.buildIndex(docs);
             double invIndexTime = Performance::stopTimer();
 
-            // TODO: Uncomment to build suffix array index and measure performance.
-            // Performance::startTimer();
-            // saIndex.buildIndex(docs);
-            // double saIndexTime = Performance::stopTimer();
+            // Build suffix array index and measure performance.
+            Performance::startTimer();
+            saIndex.buildIndex(docs);
+            double saIndexTime = Performance::stopTimer();
 
             // Display timing information to the user.
             Performance::log("Inverted Index built in", invIndexTime);
-            // TODO: Uncomment to log suffix array build time.
-            // Performance::log("Suffix Array built in", saIndexTime);
+            Performance::log("Suffix Array built in", saIndexTime);
             indexed = true; // Mark as indexed.
         }
         else if (choice == 2) {
@@ -111,10 +110,10 @@ int main() {
             std::vector<int> invResults = invIndex.searchKeyword(keyword);
             double invTime = Performance::stopTimer();
 
-            // TODO: Uncomment to search using suffix array and measure time.
-            // Performance::startTimer();
-            // std::vector<int> saResults = saIndex.searchKeyword(keyword);
-            // double saTime = Performance::stopTimer();
+            // Search using suffix array and measure time.
+            Performance::startTimer();
+            std::vector<int> saResults = saIndex.search(keyword);
+            double saTime = Performance::stopTimer();
 
             std::cout << "\nInverted Index Results (" << invResults.size() << " docs, " << invTime << " ms):\n";
             if (invResults.empty()) continue; // If no results, return to menu.
@@ -144,10 +143,10 @@ int main() {
             std::vector<int> invResults = invIndex.searchPhrase(phrase);
             double invTime = Performance::stopTimer();
 
-            // TODO: Uncomment to search using suffix array and measure time.
-            // Performance::startTimer();
-            // std::vector<int> saResults = saIndex.searchPhrase(phrase);
-            // double saTime = Performance::stopTimer();
+            // Search using suffix array and measure time.
+            Performance::startTimer();
+            std::vector<int> saResults = saIndex.search(phrase);
+            double saTime = Performance::stopTimer();
 
             std::cout << "\nInverted Index Results (" << invResults.size() << " docs, " << invTime << " ms):\n";
             if (invResults.empty()) continue; // If no results, return to menu.
@@ -177,15 +176,14 @@ int main() {
                 auto invResults = invIndex.searchKeyword(kw);
                 double invTime = Performance::stopTimer();
 
-                // TODO: Uncomment to benchmark suffix array.
-                // Performance::startTimer();
-                // auto saResults = saIndex.searchKeyword(kw);
-                // double saTime = Performance::stopTimer();
+                // Search using suffix array and measure time.
+                Performance::startTimer();
+                auto saResults = saIndex.search(kw);
+                double saTime = Performance::stopTimer();
 
                 std::cout << "Query: '" << kw << "'\n";
                 std::cout << "  Inverted Index: " << invResults.size() << " docs, " << invTime << " ms\n";
-                // TODO: Uncomment to show suffix array results.
-                // std::cout << "  Suffix Array:   " << saResults.size() << " docs, " << saTime << " ms\n\n";
+                std::cout << "  Suffix Array:   " << saResults.size() << " docs, " << saTime << " ms\n\n";
             }
             std::cout << "\n=== Phrase Search Benchmark ===\n";
             for (const auto& ph : testPhrases) {
@@ -193,22 +191,20 @@ int main() {
                 auto invResults = invIndex.searchPhrase(ph);
                 double invTime = Performance::stopTimer();
 
-                // TODO: Uncomment to benchmark suffix array.
-                // Performance::startTimer();
-                // auto saResults = saIndex.searchPhrase(ph);
-                // double saTime = Performance::stopTimer();
+                // Search using suffix array and measure time.
+                Performance::startTimer();
+                auto saResults = saIndex.search(ph);
+                double saTime = Performance::stopTimer();
 
                 std::cout << "Query: \"" << ph << "\"\n";
                 std::cout << "  Inverted Index: " << invResults.size() << " docs, " << invTime << " ms\n";
-                // TODO: Uncomment to show suffix array results.
-                // std::cout << "  Suffix Array:   " << saResults.size() << " docs, " << saTime << " ms\n\n";
+                std::cout << "  Suffix Array:   " << saResults.size() << " docs, " << saTime << " ms\n\n";
             }
         }
         else if (choice == 5) {
             // --- Exit Program ---
             invIndex.clear(); // Free memory used by the inverted index.
-            // TODO: Uncomment to clear suffix array index.
-            // saIndex.clear();
+            saIndex.clear(); // Free memory used by the suffix array index.
             break; // Exit the main loop and terminate the program.
         }
         else {
