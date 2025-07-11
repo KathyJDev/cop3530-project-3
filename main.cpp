@@ -13,6 +13,20 @@
 #include "performance.h"
 #include "utils.h"
 
+// Prompts user to choose a search method (Inverted Index or Suffix Array)
+int searchMethod() {
+    while (true) {
+        std::cout << "\nChoose search method:\n"
+                << " [1] Inverted Index\n"
+                << " [2] Suffix Array\n"
+                << "Enter your choice: ";
+        int choice;
+        std::cin >> choice;
+        if (choice == 1 || choice == 2) return choice;
+        std::cout << "Invalid choice!\n";
+    }
+}
+
 // Prints the main menu to the console, showing available actions to the user.
 void printMenu() {
     std::cout << "------------------------------------------\n"
@@ -110,17 +124,24 @@ int main() {
             std::vector<int> invResults = invIndex.searchKeyword(keyword);
             double invTime = Performance::stopTimer();
 
-            // Search using suffix array and measure time.
+            // Search for the keyword using suffix array and time the operation.
             Performance::startTimer();
-            std::vector<int> saResults = saIndex.search(keyword);
+            std::vector<int> saResults = saIndex.searchKeyword(keyword);
             double saTime = Performance::stopTimer();
 
-            std::cout << "\nInverted Index Results (" << invResults.size() << " docs, " << invTime << " ms):\n";
-            if (invResults.empty()) continue; // If no results, return to menu.
+            int method = searchMethod();
+            if (method == 1) {
+                std::cout << "\nInverted Index Results (" << invResults.size() << " docs, " << invTime << " ms):\n";
+                if (invResults.empty()) continue; // If no results, return to menu.
+            }
+            else if (method == 2) {
+                std::cout << "\nSuffix Array Results (" << saResults.size() << " docs, " << saTime << " ms):\n";
+                if (saResults.empty()) continue; // If no results, return to menu.
+            }
 
             // Allow repeated document selection and snippet viewing until user chooses to return.
             while (true) {
-                int selectedId = selectDocument(invResults, docs);
+                int selectedId = method == 1 ? selectDocument(invResults, docs) : selectDocument(saResults, docs);
                 if (selectedId == -1) break; // User chose to go back to menu.
                 // Find the selected document and show all matching snippets.
                 auto it = std::find_if(docs.begin(), docs.end(), [selectedId](const Document& d){ return d.id == selectedId; });
@@ -143,17 +164,24 @@ int main() {
             std::vector<int> invResults = invIndex.searchPhrase(phrase);
             double invTime = Performance::stopTimer();
 
-            // Search using suffix array and measure time.
+            // Search for the phrase using suffix array and time the operation.
             Performance::startTimer();
-            std::vector<int> saResults = saIndex.search(phrase);
+            std::vector<int> saResults = saIndex.searchPhrase(phrase);
             double saTime = Performance::stopTimer();
 
-            std::cout << "\nInverted Index Results (" << invResults.size() << " docs, " << invTime << " ms):\n";
-            if (invResults.empty()) continue; // If no results, return to menu.
+            int method = searchMethod();
+            if (method == 1) {
+                std::cout << "\nInverted Index Results (" << invResults.size() << " docs, " << invTime << " ms):\n";
+                if (invResults.empty()) continue; // If no results, return to menu.
+            }
+            else if (method == 2) {
+                std::cout << "\nSuffix Array Results (" << saResults.size() << " docs, " << saTime << " ms):\n";
+                if (saResults.empty()) continue; // If no results, return to menu.
+            }
 
             // Allow repeated document selection and snippet viewing until user chooses to return.
             while (true) {
-                int selectedId = selectDocument(invResults, docs);
+                int selectedId = method == 1 ? selectDocument(invResults, docs) : selectDocument(saResults, docs);
                 if (selectedId == -1) break; // User chose to go back to menu.
                 // Find the selected document and show all matching snippets.
                 auto it = std::find_if(docs.begin(), docs.end(), [selectedId](const Document& d){ return d.id == selectedId; });
@@ -176,9 +204,8 @@ int main() {
                 auto invResults = invIndex.searchKeyword(kw);
                 double invTime = Performance::stopTimer();
 
-                // Search using suffix array and measure time.
                 Performance::startTimer();
-                auto saResults = saIndex.search(kw);
+                auto saResults = saIndex.searchKeyword(kw);
                 double saTime = Performance::stopTimer();
 
                 std::cout << "Query: '" << kw << "'\n";
@@ -191,9 +218,8 @@ int main() {
                 auto invResults = invIndex.searchPhrase(ph);
                 double invTime = Performance::stopTimer();
 
-                // Search using suffix array and measure time.
                 Performance::startTimer();
-                auto saResults = saIndex.search(ph);
+                auto saResults = saIndex.searchPhrase(ph);
                 double saTime = Performance::stopTimer();
 
                 std::cout << "Query: \"" << ph << "\"\n";
