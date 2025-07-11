@@ -1,4 +1,5 @@
 #include "suffix_array.h"
+#include "tokenizer.h"
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -7,10 +8,13 @@ using namespace std;
 // Builds the suffix array for each document
 // For each document, it constructs the suffix array and stores it
 void SuffixArray::buildIndex(const vector<Document>& docs) {
-    text = docs;
+    text.clear();
     suffixArray.clear();
     for (const auto& doc : docs) {
-        suffixArray.push_back(constructSuffixArray(doc.content));
+        Document temp = doc;
+        toLower(temp.content);
+        text.push_back(temp);
+        suffixArray.push_back(constructSuffixArray(temp.content));
     }
 }
 
@@ -34,9 +38,11 @@ vector<int> SuffixArray::constructSuffixArray(const string& text) {
 // Searches for the keyword in all documents
 // Returns a vector of document IDs where the keyword appears
 vector<int> SuffixArray::searchKeyword(const string& keyword) const {
+    string processed = keyword;
+    toLower(processed);
     vector<int> result;
     for (int i = 0; i < text.size(); i++) {
-        auto pos = searchInDocument(text[i].content, suffixArray[i], keyword);
+        auto pos = searchInDocument(text[i].content, suffixArray[i], processed);
         if (!pos.empty()) {
             result.push_back(text[i].id);
         }
@@ -47,9 +53,11 @@ vector<int> SuffixArray::searchKeyword(const string& keyword) const {
 // Searches for the phrase in all documents
 // Returns a vector of document IDs where the phrase appears
 vector<int> SuffixArray::searchPhrase(const string& phrase) const {
+    string processed = phrase;
+    toLower(processed);
     vector<int> result;
     for (int i = 0; i < text.size(); i++) {
-        auto pos = searchInDocument(text[i].content, suffixArray[i], phrase);
+        auto pos = searchInDocument(text[i].content, suffixArray[i], processed);
         if (!pos.empty()) {
             result.push_back(text[i].id);
         }
