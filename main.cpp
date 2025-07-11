@@ -17,9 +17,9 @@
 int searchMethod() {
     while (true) {
         std::cout << "\nChoose search method:\n"
-                << " [1] Inverted Index\n"
-                << " [2] Suffix Array\n"
-                << "Enter your choice: ";
+                  << " [1] Inverted Index\n"
+                  << " [2] Suffix Array\n"
+                  << "Enter your choice: ";
         int choice;
         std::cin >> choice;
         if (choice == 1 || choice == 2) return choice;
@@ -46,7 +46,6 @@ void printMenu() {
 int selectDocument(const std::vector<int>& docIds, const std::vector<Document>& docs) {
     while (true) {
         std::cout << "\nDocuments containing your search:\n";
-        // List each matching document with a brief content preview.
         for (size_t i = 0; i < docIds.size(); ++i) {
             auto it = std::find_if(docs.begin(), docs.end(), [id=docIds[i]](const Document& d){ return d.id == id; });
             std::string preview = (it != docs.end() && it->content.size() > 40) ? it->content.substr(0, 40) + "..." : (it != docs.end() ? it->content : "");
@@ -56,9 +55,7 @@ int selectDocument(const std::vector<int>& docIds, const std::vector<Document>& 
         std::cout << "Select a document number: ";
         int sel = -1;
         std::cin >> sel;
-        // If user selects 0, return -1 to indicate going back to main menu.
         if (sel == 0) return -1;
-        // If valid document number selected, return the corresponding doc ID.
         if (sel > 0 && sel <= (int)docIds.size()) return docIds[sel-1];
         std::cout << "Invalid selection. Try again.\n";
     }
@@ -82,49 +79,53 @@ int main() {
     SuffixArray saIndex;               // Suffix array to store suffixes of documents.
     bool indexed = false;              // Tracks whether documents have been indexed.
 
-    // Main program loop: displays menu and handles user choices.
     while (true) {
-        printMenu();                   // Show the main menu.
+        printMenu();
         int choice;
-        std::cin >> choice;            // Get user menu choice.
+        std::cin >> choice;
 
         if (choice == 1) {
             // --- Document Indexing ---
             std::cout << "Enter path to documents: ";
             std::string path;
             std::cin >> path;
-            // Load all .txt files from the specified directory.
             docs = loadDocuments(path);
 
-            // Build the inverted index and measure performance.
             Performance::startTimer();
             invIndex.buildIndex(docs);
             double invIndexTime = Performance::stopTimer();
 
-            // Build suffix array index and measure performance.
             Performance::startTimer();
             saIndex.buildIndex(docs);
             double saIndexTime = Performance::stopTimer();
 
-            // Display timing information to the user.
             Performance::log("Inverted Index built in", invIndexTime);
             Performance::log("Suffix Array built in", saIndexTime);
-            indexed = true; // Mark as indexed.
+            indexed = true;
         }
         else if (choice == 2) {
             // --- Keyword Search ---
             if (!indexed) { std::cout << "Please index documents first!\n"; continue; }
-            std::cout << "Enter keyword: ";
             std::string keyword;
-            std::cin.ignore(); // Clear newline left in input buffer.
-            std::getline(std::cin, keyword); // Get the search keyword from the user.
+            while (true) {
+                std::cout << "Enter keyword (single word only): ";
+                std::cin.ignore();
+                std::getline(std::cin, keyword);
 
-            // Search for the keyword using the inverted index and time the operation.
+                // Tokenize and check if it's a single word
+                std::vector<std::string> tokens = tokenize(keyword);
+                if (tokens.size() != 1) {
+                    std::cout << "Error: Please enter exactly one word for keyword search.\n";
+                    continue;
+                }
+                keyword = tokens[0]; // Use the cleaned word
+                break;
+            }
+
             Performance::startTimer();
             std::vector<int> invResults = invIndex.searchKeyword(keyword);
             double invTime = Performance::stopTimer();
 
-            // Search for the keyword using suffix array and time the operation.
             Performance::startTimer();
             std::vector<int> saResults = saIndex.searchKeyword(keyword);
             double saTime = Performance::stopTimer();
@@ -132,18 +133,22 @@ int main() {
             int method = searchMethod();
             if (method == 1) {
                 std::cout << "\nInverted Index Results (" << invResults.size() << " docs, " << invTime << " ms):\n";
-                if (invResults.empty()) continue; // If no results, return to menu.
+                if (invResults.empty()) {
+                    std::cout << "No documents found containing your search.\n";
+                    continue;
+                }
             }
             else if (method == 2) {
                 std::cout << "\nSuffix Array Results (" << saResults.size() << " docs, " << saTime << " ms):\n";
-                if (saResults.empty()) continue; // If no results, return to menu.
+                if (saResults.empty()) {
+                    std::cout << "No documents found containing your search.\n";
+                    continue;
+                }
             }
 
-            // Allow repeated document selection and snippet viewing until user chooses to return.
             while (true) {
                 int selectedId = method == 1 ? selectDocument(invResults, docs) : selectDocument(saResults, docs);
-                if (selectedId == -1) break; // User chose to go back to menu.
-                // Find the selected document and show all matching snippets.
+                if (selectedId == -1) break;
                 auto it = std::find_if(docs.begin(), docs.end(), [selectedId](const Document& d){ return d.id == selectedId; });
                 if (it != docs.end()) {
                     std::cout << "Document " << selectedId << ":\n";
@@ -154,17 +159,25 @@ int main() {
         else if (choice == 3) {
             // --- Phrase Search ---
             if (!indexed) { std::cout << "Please index documents first!\n"; continue; }
-            std::cout << "Enter phrase: ";
             std::string phrase;
-            std::cin.ignore(); // Clear newline left in input buffer.
-            std::getline(std::cin, phrase); // Get the search phrase from the user.
+            while (true) {
+                std::cout << "Enter phrase (two or more words): ";
+                std::cin.ignore();
+                std::getline(std::cin, phrase);
 
-            // Search for the phrase using the inverted index and time the operation.
+                // Tokenize and check if it's more than one word
+                std::vector<std::string> tokens = tokenize(phrase);
+                if (tokens.size() < 2) {
+                    std::cout << "Error: Please enter two or more words for phrase search.\n";
+                    continue;
+                }
+                break;
+            }
+
             Performance::startTimer();
             std::vector<int> invResults = invIndex.searchPhrase(phrase);
             double invTime = Performance::stopTimer();
 
-            // Search for the phrase using suffix array and time the operation.
             Performance::startTimer();
             std::vector<int> saResults = saIndex.searchPhrase(phrase);
             double saTime = Performance::stopTimer();
@@ -172,18 +185,22 @@ int main() {
             int method = searchMethod();
             if (method == 1) {
                 std::cout << "\nInverted Index Results (" << invResults.size() << " docs, " << invTime << " ms):\n";
-                if (invResults.empty()) continue; // If no results, return to menu.
+                if (invResults.empty()) {
+                    std::cout << "No documents found containing your search.\n";
+                    continue;
+                }
             }
             else if (method == 2) {
                 std::cout << "\nSuffix Array Results (" << saResults.size() << " docs, " << saTime << " ms):\n";
-                if (saResults.empty()) continue; // If no results, return to menu.
+                if (saResults.empty()) {
+                    std::cout << "No documents found containing your search.\n";
+                    continue;
+                }
             }
 
-            // Allow repeated document selection and snippet viewing until user chooses to return.
             while (true) {
                 int selectedId = method == 1 ? selectDocument(invResults, docs) : selectDocument(saResults, docs);
-                if (selectedId == -1) break; // User chose to go back to menu.
-                // Find the selected document and show all matching snippets.
+                if (selectedId == -1) break;
                 auto it = std::find_if(docs.begin(), docs.end(), [selectedId](const Document& d){ return d.id == selectedId; });
                 if (it != docs.end()) {
                     std::cout << "Document " << selectedId << ":\n";
@@ -194,7 +211,6 @@ int main() {
         else if (choice == 4) {
             // --- Performance Report ---
             if (!indexed) { std::cout << "Index documents first!\n"; continue; }
-            // Predefined test cases for benchmarking search performance.
             std::vector<std::string> testKeywords = {"the", "and", "science", "history"};
             std::vector<std::string> testPhrases = {"the quick", "end of", "quantum physics"};
 
@@ -228,13 +244,11 @@ int main() {
             }
         }
         else if (choice == 5) {
-            // --- Exit Program ---
-            invIndex.clear(); // Free memory used by the inverted index.
-            saIndex.clear(); // Free memory used by the suffix array index.
-            break; // Exit the main loop and terminate the program.
+            invIndex.clear();
+            saIndex.clear();
+            break;
         }
         else {
-            // Handle invalid menu selections.
             std::cout << "Invalid choice!\n";
         }
     }
