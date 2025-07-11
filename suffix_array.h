@@ -12,7 +12,8 @@ class SuffixArray {
     vector<int> searchInDocument(const string& text, const vector<int>& suffixArray, const string& query) const;
 public:
     void buildIndex(const vector<Document>& docs);
-    vector<int> search(const string& query) const;
+    vector<int> searchKeyword(const string& keyword) const;
+    vector<int> searchPhrase(const string& phrase) const;
     void clear();
 };
 
