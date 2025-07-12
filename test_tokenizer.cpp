@@ -1,11 +1,6 @@
 #include <catch2/catch_all.hpp>
-#include <sstream>
 #include <iostream>
-#include "document.h"
 #include "tokenizer.h"
-#include "inverted_index.h"
-#include "performance.h"
-#include "utils.h"
 
 using namespace std;
 
