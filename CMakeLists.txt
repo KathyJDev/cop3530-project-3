@@ -38,6 +38,7 @@ add_executable(tests
         test_suffix_array.cpp
         suffix_array.h
         suffix_array.cpp
+        test_tokenizer.cpp
         document.cpp
         document.h
         inverted_index.h
