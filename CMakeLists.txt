@@ -19,6 +19,8 @@ add_executable(search_engine
         main.cpp
         document.cpp
         document.h
+        suffix_array.cpp
+        suffix_array.h
         inverted_index.cpp
         inverted_index.h
         tokenizer.cpp
@@ -31,6 +33,11 @@ add_executable(search_engine
 
 # These tests can use the Catch2-provided main
 add_executable(tests
+        test_inverted_index.cpp
+        test_tokenizer.cpp
+        test_suffix_array.cpp
+        suffix_array.h
+        suffix_array.cpp
         test_tokenizer.cpp
         document.cpp
         document.h
