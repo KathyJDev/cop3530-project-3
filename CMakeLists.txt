@@ -31,7 +31,7 @@ add_executable(search_engine
 
 # These tests can use the Catch2-provided main
 add_executable(tests
-        test.cpp
+        test_tokenizer.cpp
         document.cpp
         document.h
         inverted_index.h
