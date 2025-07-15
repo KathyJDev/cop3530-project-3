@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <fstream>
+#include <set>
 #include "document.h"
 #include "tokenizer.h"
 #include "inverted_index.h"
@@ -13,7 +15,6 @@
 #include "performance.h"
 #include "utils.h"
 
-// Prompts user to choose a search method (Inverted Index or Suffix Array)
 int searchMethod() {
     while (true) {
         std::cout << "\nChoose search method:\n"
@@ -27,7 +28,6 @@ int searchMethod() {
     }
 }
 
-// Prints the main menu to the console, showing available actions to the user.
 void printMenu() {
     std::cout << "------------------------------------------\n"
               << "|          Simple Search Engine          |\n"
@@ -41,8 +41,6 @@ void printMenu() {
               << "Enter your choice: ";
 }
 
-// Displays a numbered list of matching documents and lets the user select one to view.
-// Returns the selected document's ID, or -1 if the user chooses to go back to the menu.
 int selectDocument(const std::vector<int>& docIds, const std::vector<Document>& docs) {
     while (true) {
         std::cout << "\nDocuments containing your search:\n";
@@ -61,23 +59,168 @@ int selectDocument(const std::vector<int>& docIds, const std::vector<Document>& 
     }
 }
 
-int main() {
+void printSnippets(const std::string& content, const std::string& query, int context = 40) {
+    std::string lower_content = content;
+    std::string lower_query = query;
+    std::transform(lower_content.begin(), lower_content.end(), lower_content.begin(), ::tolower);
+    std::transform(lower_query.begin(), lower_query.end(), lower_query.begin(), ::tolower);
+
+    size_t pos = 0;
+    bool found = false;
+    while ((pos = lower_content.find(lower_query, pos)) != std::string::npos) {
+        found = true;
+        int start = static_cast<int>(pos) - context;
+        int end = static_cast<int>(pos) + static_cast<int>(query.size()) + context;
+        if (start < 0) start = 0;
+        if (end > (int)content.size()) end = (int)content.size();
+        std::cout << "..." << content.substr(start, end - start) << "...\n";
+        pos += query.size();
+    }
+    if (!found) {
+        std::cout << "No snippets found.\n";
+    }
+}
+
+int main(int argc, char* argv[]) {
 #ifdef _WIN32
-    // Enable ANSI color in Windows 10+ cmd.exe for colored output.
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut != INVALID_HANDLE_VALUE) {
         DWORD dwMode = 0;
         if (GetConsoleMode(hOut, &dwMode)) {
-            dwMode |= 0x0004; // ENABLE_VIRTUAL_TERMINAL_PROCESSING
+            dwMode |= 0x0004;
             SetConsoleMode(hOut, dwMode);
         }
     }
 #endif
 
-    std::vector<Document> docs;        // Stores all loaded documents.
-    InvertedIndex invIndex;            // Inverted index for fast keyword/phrase searching.
-    SuffixArray saIndex;               // Suffix array to store suffixes of documents.
-    bool indexed = false;              // Tracks whether documents have been indexed.
+    // --- GUI/Script Integration Mode ---
+    if (argc >= 2) {
+        std::string cmd = argv[1];
+        std::string folder = ".";
+        std::string ds = "inverted"; // default
+
+        // Helper to parse folder and ds
+        auto parse_folder_ds = [&](int base) {
+            if (argc > base) folder = argv[base];
+            if (argc > base + 2 && std::string(argv[base + 1]) == "--ds") ds = argv[base + 2];
+        };
+
+        if (cmd == "--index" && argc >= 3) {
+            folder = argv[2];
+            std::vector<Document> docs = loadDocuments(folder);
+            InvertedIndex invIndex; invIndex.buildIndex(docs);
+            SuffixArray saIndex; saIndex.buildIndex(docs);
+            std::cout << "Indexed " << docs.size() << " documents.\n";
+            return 0;
+        }
+        else if (cmd == "--search" && argc >= 3) {
+            std::string query = argv[2];
+            parse_folder_ds(3);
+            std::vector<Document> docs = loadDocuments(folder);
+            InvertedIndex invIndex; invIndex.buildIndex(docs);
+            SuffixArray saIndex; saIndex.buildIndex(docs);
+            std::vector<std::string> tokens = tokenize(query);
+
+            std::vector<int> results;
+            if (ds == "suffix") {
+                results = (tokens.size() > 1) ? saIndex.searchPhrase(query) : saIndex.searchKeyword(query);
+            } else {
+                results = (tokens.size() > 1) ? invIndex.searchPhrase(query) : invIndex.searchKeyword(query);
+            }
+
+            // Deduplicate doc IDs while preserving order
+            std::vector<int> unique_docIds;
+            std::set<int> seen;
+            for (int docId : results) {
+                if (seen.insert(docId).second) {
+                    unique_docIds.push_back(docId);
+                }
+            }
+
+            for (int docId : unique_docIds) {
+                auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
+                if (it != docs.end()) {
+                    std::string preview = (it->content.size() > 80) ? it->content.substr(0, 80) + "..." : it->content;
+                    std::cout << "Document " << docId << ": " << preview << "\n";
+                }
+            }
+            return 0;
+        }
+        else if (cmd == "--lucky" && argc >= 3) {
+            std::string query = argv[2];
+            parse_folder_ds(3);
+            std::vector<Document> docs = loadDocuments(folder);
+            InvertedIndex invIndex; invIndex.buildIndex(docs);
+            SuffixArray saIndex; saIndex.buildIndex(docs);
+            std::vector<std::string> tokens = tokenize(query);
+
+            std::vector<int> results;
+            if (ds == "suffix") {
+                results = (tokens.size() > 1) ? saIndex.searchPhrase(query) : saIndex.searchKeyword(query);
+            } else {
+                results = (tokens.size() > 1) ? invIndex.searchPhrase(query) : invIndex.searchKeyword(query);
+            }
+
+            // Deduplicate doc IDs while preserving order
+            std::vector<int> unique_docIds;
+            std::set<int> seen;
+            for (int docId : results) {
+                if (seen.insert(docId).second) {
+                    unique_docIds.push_back(docId);
+                }
+            }
+
+            if (!unique_docIds.empty()) {
+                int docId = unique_docIds[0];
+                auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
+                if (it != docs.end()) {
+                    std::cout << it->content << "\n";
+                }
+            }
+            return 0;
+        }
+        else if (cmd == "--add-file" && argc >= 3) {
+            std::string filePath = argv[2];
+            if (argc >= 4) folder = argv[3];
+            std::ifstream in(filePath);
+            if (!in) {
+                std::cerr << "Could not open file: " << filePath << "\n";
+                return 1;
+            }
+            std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+            std::vector<Document> docs = loadDocuments(folder);
+            int newId = docs.empty() ? 1 : docs.back().id + 1;
+            docs.push_back(Document(newId, content));
+            InvertedIndex invIndex; invIndex.buildIndex(docs);
+            SuffixArray saIndex; saIndex.buildIndex(docs);
+            std::cout << "Added and indexed file: " << filePath << "\n";
+            return 0;
+        }
+        else if (cmd == "--snippets" && argc >= 4) {
+            std::string query = argv[2];
+            int docId = std::stoi(argv[3]);
+            parse_folder_ds(4);
+            std::vector<Document> docs = loadDocuments(folder);
+            InvertedIndex invIndex; invIndex.buildIndex(docs);
+            SuffixArray saIndex; saIndex.buildIndex(docs);
+
+            auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
+            if (it != docs.end()) {
+                // You can use a more advanced snippet extraction for suffix if you wish
+                printSnippets(it->content, query);
+            } else {
+                std::cout << "Document not found.\n";
+            }
+            return 0;
+        }
+        // If unknown arg, fall through to CLI
+    }
+
+    // --- CLI Mode (unchanged) ---
+    std::vector<Document> docs;
+    InvertedIndex invIndex;
+    SuffixArray saIndex;
+    bool indexed = false;
 
     while (true) {
         printMenu();
@@ -85,7 +228,6 @@ int main() {
         std::cin >> choice;
 
         if (choice == 1) {
-            // --- Document Indexing ---
             std::cout << "Enter path to documents: ";
             std::string path;
             std::cin >> path;
@@ -104,24 +246,20 @@ int main() {
             indexed = true;
         }
         else if (choice == 2) {
-            // --- Keyword Search ---
             if (!indexed) { std::cout << "Please index documents first!\n"; continue; }
             std::string keyword;
             while (true) {
                 std::cout << "Enter keyword (single word only): ";
                 std::cin.ignore();
                 std::getline(std::cin, keyword);
-
-                // Tokenize and check if it's a single word
                 std::vector<std::string> tokens = tokenize(keyword);
                 if (tokens.size() != 1) {
                     std::cout << "Error: Please enter exactly one word for keyword search.\n";
                     continue;
                 }
-                keyword = tokens[0]; // Use the cleaned word
+                keyword = tokens[0];
                 break;
             }
-
             Performance::startTimer();
             std::vector<int> invResults = invIndex.searchKeyword(keyword);
             double invTime = Performance::stopTimer();
@@ -157,15 +295,12 @@ int main() {
             }
         }
         else if (choice == 3) {
-            // --- Phrase Search ---
             if (!indexed) { std::cout << "Please index documents first!\n"; continue; }
             std::string phrase;
             while (true) {
                 std::cout << "Enter phrase (two or more words): ";
                 std::cin.ignore();
                 std::getline(std::cin, phrase);
-
-                // Tokenize and check if it's more than one word
                 std::vector<std::string> tokens = tokenize(phrase);
                 if (tokens.size() < 2) {
                     std::cout << "Error: Please enter two or more words for phrase search.\n";
@@ -173,7 +308,6 @@ int main() {
                 }
                 break;
             }
-
             Performance::startTimer();
             std::vector<int> invResults = invIndex.searchPhrase(phrase);
             double invTime = Performance::stopTimer();
@@ -209,7 +343,6 @@ int main() {
             }
         }
         else if (choice == 4) {
-            // --- Performance Report ---
             if (!indexed) { std::cout << "Index documents first!\n"; continue; }
             std::vector<std::string> testKeywords = {"the", "and", "science", "history"};
             std::vector<std::string> testPhrases = {"the quick", "end of", "quantum physics"};
