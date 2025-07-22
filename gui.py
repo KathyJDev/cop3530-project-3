@@ -4,10 +4,10 @@ import requests
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
     QLabel, QListWidget, QListWidgetItem, QMessageBox, QInputDialog, QTextEdit,
-    QFileDialog, QComboBox, QDialog, QSizePolicy
+    QFileDialog, QComboBox, QDialog, QSizePolicy, QButtonGroup, QAction
 )
-from PyQt5.QtGui import QPixmap, QFont
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QPixmap, QFont, QIcon
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize
 import os
 import re
 
@@ -74,51 +74,151 @@ class SearchWindow(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
 
+        # Load logo image if available, otherwise display title text
         self.logo_label = QLabel()
         pixmap = QPixmap("logo.png")
         if pixmap.isNull():
             self.logo_label.setText("Search Engine")
+            self.setStyleSheet("background-color: #202020; color: white;")
             self.logo_label.setFont(QFont("Arial", 24))
+            self.logo_label.setStyleSheet("font-weight: 600;")
         else:
             self.logo_label.setPixmap(pixmap.scaled(200, 70, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.logo_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.logo_label)
 
+        # Toggle Buttons
+        btn_font = QFont("Arial", 10)
+        toggle_layout = QHBoxLayout()
+        self.inverted_btn = QPushButton("Inverted Index")
+        self.suffix_btn = QPushButton("Suffix Array")
+        self.inverted_btn.setFont(btn_font)
+        self.suffix_btn.setFont(btn_font)
+        self.inverted_btn.setCursor(Qt.PointingHandCursor)
+        self.suffix_btn.setCursor(Qt.PointingHandCursor)
+
+        for btn in (self.inverted_btn, self.suffix_btn):
+            btn.setCheckable(True)
+            btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            btn.setStyleSheet("""
+                QPushButton { 
+                    padding: 6px 12px; 
+                    border-radius: 4px;
+                    background-color: #202020;
+                    color: #8E8E8E;
+                    font-weight: 500;
+                } 
+                QPushButton:checked { 
+                    background-color: #414141;
+                    color: white;
+                }
+                QPushButton:hover {
+                    background-color: #414141;
+                    color: white;
+                }
+            """)
+        toggle_group = QButtonGroup(self)
+        toggle_group.setExclusive(True)
+        toggle_group.addButton(self.inverted_btn)
+        toggle_group.addButton(self.suffix_btn)
+        self.inverted_btn.setChecked(True)
+        toggle_layout.addStretch()
+        toggle_layout.addWidget(self.inverted_btn)
+        toggle_layout.addWidget(self.suffix_btn)
+        toggle_layout.addStretch()
+        toggle_layout.setContentsMargins(0, 6, 0, 6)
+        layout.addLayout(toggle_layout)
+
+        # Search Input
+        search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("keywords Or Phrases...")
-        self.search_input.setFont(QFont("Arial", 16))
-        layout.addWidget(self.search_input)
+        self.search_input.setPlaceholderText("type keywords or phrases...")
+        self.search_input.setFont(QFont("Inter", 11))
+        self.search_input.setMinimumHeight(32)
+        self.search_input.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 24px;
+                border-radius: 16px;
+                background-color: #D9D9D9;
+                color: #202020;
+                font-weight: 400;
+            }
+        """)
+        self.search_icon = QPushButton()
+        self.search_icon.setIcon(QIcon("resources/images/search.svg"))
+        self.search_icon.setIconSize(QSize(16, 16))
+        self.search_icon.setFixedSize(40, 40)
+        self.search_icon.setStyleSheet("""
+            QPushButton {
+                background-color: #414141;
+                border-radius: 20px;
+            }
+        """)
+        self.search_icon.setCursor(Qt.PointingHandCursor)
+        search_layout.addWidget(self.search_input)
+        search_layout.addWidget(self.search_icon)
+        search_layout.setContentsMargins(48, 0, 48, 0)
+        layout.addLayout(search_layout)
 
-        btn_layout = QHBoxLayout()
-        self.search_btn = QPushButton("Search")
-        # --- REMOVED: self.lucky_btn = QPushButton("First Matching Document") ---
-        btn_layout.addStretch() # Add stretch to the left
-        btn_layout.addWidget(self.search_btn)
-        btn_layout.addStretch() # Add stretch to the right
-        layout.addLayout(btn_layout)
+        # btn_layout = QHBoxLayout()
+        # self.search_btn = QPushButton("Search")
+        # # --- REMOVED: self.lucky_btn = QPushButton("First Matching Document") ---
+        # btn_layout.addStretch() # Add stretch to the left
+        # btn_layout.addWidget(self.search_btn)
+        # btn_layout.addStretch() # Add stretch to the right
+        # layout.addLayout(btn_layout)
 
-        ds_layout = QHBoxLayout()
-        ds_label = QLabel("Search Engine:")
-        self.ds_combo = QComboBox()
-        self.ds_combo.addItems(["Inverted Index", "Suffix Array"])
-        ds_layout.addWidget(ds_label)
-        ds_layout.addWidget(self.ds_combo)
-        ds_layout.addStretch()
-        layout.addLayout(ds_layout)
+        # ds_layout = QHBoxLayout()
+        # ds_label = QLabel("Search Engine:")
+        # self.ds_combo = QComboBox()
+        # self.ds_combo.addItems(["Inverted Index", "Suffix Array"])
+        # ds_layout.addWidget(ds_label)
+        # ds_layout.addWidget(self.ds_combo)
+        # ds_layout.addStretch()
+        # layout.addLayout(ds_layout)
 
+
+        # Document Indexing and Online Search Buttons
+        ds_layout = QVBoxLayout()
         self.index_btn = QPushButton("Index Local Documents")
         self.online_btn = QPushButton("Search Online (Gutenberg)")
-        layout.addWidget(self.index_btn)
-        layout.addWidget(self.online_btn)
+        self.index_btn.setFont(QFont("Arial", 10))
+        self.online_btn.setFont(QFont("Arial", 10))
+        for btn in (self.index_btn, self.online_btn):
+            btn.setStyleSheet("""
+                QPushButton { 
+                    padding: 6px; 
+                    border-radius: 4px; 
+                    background-color: #202020; 
+                    color: white;
+                    font-weight: 500;
+                } 
+                QPushButton:hover { 
+                    background-color: #414141;
+                }
+            """)
+        btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        ds_layout.addWidget(self.index_btn)
+        ds_layout.addWidget(self.online_btn)
+        layout.addLayout(ds_layout)
 
+        # Document Results Box
         self.results = QListWidget()
         self.results.setMinimumHeight(150)
+        self.results.setFont(QFont("Arial", 11))
+        self.results.setStyleSheet("""
+            QListWidget {
+                border-radius: 8px; 
+                color: black;
+                background-color: #D9D9D9;
+            }
+            """)
         layout.addWidget(self.results)
 
         self.setLayout(layout)
 
         self.index_btn.clicked.connect(self.index_documents)
-        self.search_btn.clicked.connect(self.search)
+        self.search_icon.clicked.connect(self.search)
         # --- REMOVED: self.lucky_btn.clicked.connect(self.feeling_lucky) ---
         self.online_btn.clicked.connect(self.search_online)
         self.results.itemDoubleClicked.connect(self.show_document)
@@ -131,7 +231,7 @@ class SearchWindow(QWidget):
         """)
 
     def get_ds_flag(self):
-        return "--ds", "suffix" if self.ds_combo.currentIndex() == 1 else "inverted"
+        return "--ds", "suffix" if self.suffix_btn.isChecked() else "inverted"
 
     def index_documents(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Documents Directory")
