@@ -245,13 +245,6 @@ class SearchWindow(QWidget):
         self.online_btn.clicked.connect(self.search_online)
         self.results.itemDoubleClicked.connect(self.show_document)
 
-        self.setStyleSheet("""
-            QWidget { background: white; }
-            QLineEdit { font-size: 18px; padding: 8px; border-radius: 16px; border: 1px solid #ddd; }
-            QPushButton { font-size: 16px; padding: 8px 16px; border-radius: 10px; }
-            QPushButton:hover { background: #f8f8f8; }
-        """)
-
     def get_ds_flag(self):
         return "--ds", "suffix" if self.suffix_btn.isChecked() else "inverted"
 
