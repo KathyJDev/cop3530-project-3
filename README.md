@@ -159,7 +159,10 @@ python gui.py
   pages={9},
   year={2019}
 }
-  
+
+## 📝 Other Files
+- Files with test_XXXXX.cpp files are used to test through each function of the code using Catch2
+
 ## ❓ Troubleshooting
 
 **No output when running .exe:**
