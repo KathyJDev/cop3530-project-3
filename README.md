@@ -146,7 +146,20 @@ Run:
 python gui.py
 ```
 (Follow the GUI’s prompts.)
-
+## ⭐ Future Implementations
+- Using a text generation model, it would be able to generate summaries of the document you have chosen.
+- Relevant Files: gui.py, generate_summary.py
+- Source model: https://huggingface.co/openai-community/gpt2-medium
+- @article{radford2019language,
+  title={Language models are unsupervised multitask learners},
+  author={Radford, Alec and Wu, Jeffrey and Child, Rewon and Luan, David and Amodei, Dario and Sutskever, Ilya and others},
+  journal={OpenAI blog},
+  volume={1},
+  number={8},
+  pages={9},
+  year={2019}
+}
+  
 ## ❓ Troubleshooting
 
 **No output when running .exe:**
