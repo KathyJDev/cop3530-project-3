@@ -183,8 +183,6 @@ python gui.py
 
 
 ## 📚 References
->>>>>>> 4ec166cf3854886a4484e9ba0d7692600713a0f2:README.md
-
 - [cpp-httplib](https://github.com/yhirose/cpp-httplib)
 - [PyQt5](https://wiki.python.org/moin/PyQt)
 - [Project Gutenberg](https://gutenberg.org/)
