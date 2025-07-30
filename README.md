@@ -42,7 +42,6 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
     - `utils.cpp/h`
     - `httplib.h` # Required C++ HTTP library
     - `json.hpp` # Required C++ JSON library
-    - `Project3Code.txt` # Provided as a full reference
     - `gui.py` # Python GUI script (optional, if used)
     - `[Any other dependencies]`
     - `[data/]` # Your documents folder (place text files here)
