@@ -167,7 +167,7 @@ class SearchWindow(QWidget):
             }
         """)
         self.search_icon = QPushButton()
-        self.search_icon.setIcon(QIcon("../resources/images/search.svg"))
+        self.search_icon.setIcon(QIcon("resources/images/search.svg"))
         self.search_icon.setIconSize(QSize(16, 16))
         self.search_icon.setFixedSize(40, 40)
         self.search_icon.setStyleSheet("""
