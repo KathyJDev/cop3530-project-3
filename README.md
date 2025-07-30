@@ -19,7 +19,6 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
 - **C++14** or newer (`-std=c++14`)
 - Header-only libraries:
   - [`cpp-httplib` (httplib.h)](https://github.com/yhirose/cpp-httplib)
-  - [`nlohmann/json` (json.hpp)](https://github.com/nlohmann/json)
 - [`curl`](https://curl.se/) utility (optional; for raw CLI downloads)
 - **On Windows:** Link with `-lws2_32`
 
@@ -41,7 +40,6 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
     - `performance.cpp/h`
     - `utils.cpp/h`
     - `httplib.h` # Required C++ HTTP library
-    - `json.hpp` # Required C++ JSON library
     - `gui.py` # Python GUI script (optional, if used)
     - `[Any other dependencies]`
     - `[test_data/]` # Your documents folder (place text files here)
@@ -75,10 +73,9 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
     # macOS (usually pre-installed, or via Homebrew)
     brew install curl
     ```
-- **Header-only Libraries (`httplib.h`, `json.hpp`):**
+- **Header-only Libraries (`httplib.h`):**
   - Download these files directly into your project's root directory:
     - [httplib.h](https://raw.githubusercontent.com/yhirose/cpp-httplib/master/httplib.h)
-    - [json.hpp](https://raw.githubusercontent.com/nlohmann/json/develop/single_include/nlohmann/json.hpp)
 
 **Python GUI Dependencies (Optional):**
 ```bash
@@ -99,7 +96,7 @@ g++ -std=c++14 main.cpp document.cpp tokenizer.cpp inverted_index.cpp suffix_arr
 g++ -std=c++14 main.cpp document.cpp tokenizer.cpp inverted_index.cpp suffix_array.cpp performance.cpp utils.cpp -o search-engine
 ```
 
-> **Note:** Ensure `httplib.h` and `json.hpp` are present in your project folder (or configure your build system to include them if they are in a dedicated include subdirectory using `-Iinclude`).
+> **Note:** Ensure `httplib.h` is present in your project folder (or configure your build system to include them if they are in a dedicated include subdirectory using `-Iinclude`).
 
 ### 3. Run the Application
 
@@ -191,9 +188,9 @@ README files are formatted using Markdown in GitHub. If you're not familiar with
 >>>>>>> 4ec166cf3854886a4484e9ba0d7692600713a0f2:README.md
 
 - [cpp-httplib](https://github.com/yhirose/cpp-httplib)
-- [nlohmann/json](https://github.com/nlohmann/json)
 - [PyQt5](https://wiki.python.org/moin/PyQt)
 - [Project Gutenberg](https://gutenberg.org/)
+- [os module](https://docs.python.org/3/library/os.html)
 
 ## 📝 License
 
