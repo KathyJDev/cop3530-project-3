@@ -136,6 +136,8 @@ Enter your choice:
 - **Option 2/3:** Search for keywords or phrases (indexing must be done first)
 - **Option 6:** Download and index books from Project Gutenberg
 
+> **Note:** A dataset of books from Gutenberg is already provided in test_data/
+
 #### Python GUI
 
 Run:
