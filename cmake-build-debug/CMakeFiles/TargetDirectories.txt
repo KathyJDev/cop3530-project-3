@@ -1,0 +1,10 @@
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/CMakeFiles/search_engine.dir
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/CMakeFiles/tests.dir
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/_deps/catch2-build/CMakeFiles/edit_cache.dir
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/_deps/catch2-build/CMakeFiles/rebuild_cache.dir
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/_deps/catch2-build/src/CMakeFiles/Catch2.dir
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/_deps/catch2-build/src/CMakeFiles/Catch2WithMain.dir
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/_deps/catch2-build/src/CMakeFiles/edit_cache.dir
+C:/Users/danie/CLionProjects/cop3530-project-3/cmake-build-debug/_deps/catch2-build/src/CMakeFiles/rebuild_cache.dir
