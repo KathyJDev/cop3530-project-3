@@ -34,6 +34,8 @@ except ImportError:
 import gzip
 import io
 
+# from generate_summary import DocSummary
+
 GUTENDEX_API = "https://gutendex.com/books"
 
 class WorkerThread(QThread):
@@ -58,6 +60,25 @@ class WorkerThread(QThread):
         except Exception as e:
             self.error.emit(f"An unexpected error occurred: {e}")
 
+"""
+class SummarizerWorker(QThread):
+    finished = pyqtSignal(str)
+    error = pyqtSignal(str)
+    def __init__(self, text_to_summarize):
+        super().__init__()
+        self.text = text_to_summarize
+    def run(self):
+        try:
+            words = self.text.split()
+            reduced_content = " ".join(words[:1000])
+            summarizer = DocSummary()
+            summary_list = summarizer.summarize(reduced_content)
+            self.finished.emit(summary_list[0]['summary_text'])
+
+        except Exception as e:
+            self.error.emit(f"Error Summary unable to generate:{e}")
+"""
+
 class SearchWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -70,6 +91,7 @@ class SearchWindow(QWidget):
         self.doc_map = {}
         self.init_ui()
         self.current_worker = None
+       #self.summarizer_worker = None
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -565,7 +587,7 @@ class SearchWindow(QWidget):
 
         target_dir = os.path.dirname(full_path)
         if not target_dir:
-             target_dir = "."
+            target_dir = "."
 
         if not os.path.exists(target_dir):
             try:
@@ -638,6 +660,65 @@ class SearchWindow(QWidget):
         else:
             content = self.doc_map.get(item.text(), "")
             self.show_document_content(content, highlight=False)
+    """
+        dialog = QMessageBox(self);
+        dialog.setWindowTitle("Action")
+        dialog.setText(f"Document {doc_id}")
+        dialog.setInformativeText("Pick action you would like to perform.")
+
+        snippets_btn = dialog.addButton("View Snippets", QMessageBox.ActionRole)
+        summary_btn = dialog.addButton("Generate Summary", QMessageBox.ActionRole)
+        dialog.addButton(QMessageBox.Cancel)
+
+        dialog.exec_()
+        clicked_btn = dialog.clickedButton()
+
+        if clicked_btn == snippets_btn:
+            self.show_snippets_for_document(doc_id)
+        elif clicked_btn == summary_btn:
+            self.start_summarization(doc_id)
+    
+    def show_snippets_for_document(self, doc_id):
+        ds_flag, ds_value = self.get_ds_flag()
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.current_worker = WorkerThread(
+            ['./search_engine', '--snippets', self.last_query, str(doc_id),
+             self.indexed_folder, ds_flag, ds_value]
+        )
+
+        self.current_worker.finished.connect(self.on_show_document_finished)
+        self.current_worker.error.connect(self.on_search_error)
+        self.current_worker.start()
+
+    def start_summarization(self, doc_id):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.current_worker = WorkerThread(
+            ['./search_engine', '--get-content', str(doc_id), self.indexed_folder]
+        )
+        self.current_worker.finished.connect(self.summary_recieved)
+        self.current_worker.error.connect(self.on_worker_error)
+        self.current_worker.start()
+    
+    def summary_recieved(self, result):
+        doc_content = result.stdout
+        self.summarizer_worker = SummarizerWorker(doc_content)
+        self.summarizer_worker.finished.connect(self.summary_displayed)
+        self.summarizer_worker.error.connect(self.on_worker_error)
+        self.summarizer_worker.start()
+
+    def summary_displayed(self, summary_text):
+        QApplication.restoreOverrideCursor()
+        self.current_worker = None
+        self.summarizer_worker = None
+
+        viewer = QTextEdit()
+        viewer.setReadOnly(True)
+        viewer.setPlainText(summary_text)
+        viewer.setWindowTitle("Document Summary")
+        viewer.resize(600, 250)
+        viewer.show()
+        self._last_view = viewer
+    """
 
     def on_show_document_finished(self, result):
         QApplication.restoreOverrideCursor()
@@ -652,6 +733,13 @@ class SearchWindow(QWidget):
         QMessageBox.warning(self, "Error", error_message)
         self.current_worker = None
 
+    """
+    def on_worker_error(self, error_message):
+        QApplication.restoreOverrideCursor()
+        QMessageBox.warning(self, "Worker Error", error_message)
+        self.current_worker = None
+        self.summarizer_worker = None
+    """
     def show_document_content(self, content, highlight=True):
         if content is None:
             content = ""
