@@ -346,6 +346,19 @@ int main(int argc, char* argv[]) {
             } else {
                 std::cout << "Document not found.\n";
             }
+            /*
+        }else if (cmd == "--get-content" && argc >= 4) {
+            int docId = std::stoi(argv[2]);
+            folder = argv[3];
+            std::vector<Document> docs = loadDocuments(folder);
+
+            auto it = std::find_if(docs.begin(),docs.end(), [docId](const Document& d){ return d.id == docId; });
+            if (it != docs.end()) {
+                cout<<it->content<<"\n";
+            }else {
+                return 1;
+            }
+        */
             return 0;
         }
         // If an unknown command-line argument is provided, fall through to CLI mode.
