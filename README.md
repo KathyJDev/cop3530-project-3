@@ -44,7 +44,7 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
     - `json.hpp` # Required C++ JSON library
     - `gui.py` # Python GUI script (optional, if used)
     - `[Any other dependencies]`
-    - `[data/]` # Your documents folder (place text files here)
+    - `[test_data/]` # Your documents folder (place text files here)
     - `README.md`
 
 
