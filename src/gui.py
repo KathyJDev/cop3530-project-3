@@ -577,29 +577,27 @@ class SearchWindow(QWidget):
             QMessageBox.warning(self, "No Text", "Could not download a plain text, HTML, or EPUB version for this book, or text was too short.")
             return
 
+        test_data_dir = os.path.join(self.indexed_folder, "test_data")
+        if not os.path.exists(test_data_dir):
+            try:
+                os.makedirs(test_data_dir)
+            except OSError as e:
+                QApplication.restoreOverrideCursor()
+                QMessageBox.warning(self, "Error", f"Could not find test_data folder")
+                return
+
         title = book.get("title", "gutenberg_book").replace(" ", "_")
         invalid_chars = r'[<>:"/\\|?*\x00-\x1f]'
         title = re.sub(invalid_chars, '', title)
         title = title[:60]
-
         filename = f"{title}_{book_id}.txt"
-        full_path = os.path.join(self.indexed_folder, filename)
+        full_path = os.path.join(test_data_dir, filename)
 
-        target_dir = os.path.dirname(full_path)
-        if not target_dir:
-            target_dir = ".."
+        content = f"Document: {filename} \n\n {content}.txt"
 
-        if not os.path.exists(target_dir):
-            try:
-                os.makedirs(target_dir)
-            except OSError as e:
-                QApplication.restoreOverrideCursor()
-                QMessageBox.warning(self, "File System Error", f"Could not create directory '{target_dir}': {e}. Please ensure you have write permissions.")
-                return
-
-        if not os.access(target_dir, os.W_OK):
+        if not os.access(test_data_dir, os.W_OK):
             QApplication.restoreOverrideCursor()
-            QMessageBox.warning(self, "Permissions Error", f"Cannot write to directory '{target_dir}'. Please check your folder permissions.")
+            QMessageBox.warning(self, "Permissions Error", f"Cannot write to directory '{test_data_dir}'. Please check your folder permissions.")
             return
 
         try:

@@ -89,13 +89,15 @@ void downloadGutenbergBook() {
     std::string folderPath;
     std::cin >> folderPath;
 
+    std::string storePath = folderPath+"/test_data";
 #ifdef _WIN32
-    std::string mkdir_cmd = "mkdir \"" + folderPath + "\" > nul 2>&1";
+    std::string mkdir_cmd = "mkdir \"" + storePath + "\" > nul 2>&1";
 #else
-    std::string mkdir_cmd = "mkdir -p \"" + folderPath + "\"";
+    std::string mkdir_cmd = "mkdir -p \"" + storePath + "\"";
 #endif
     system(mkdir_cmd.c_str());
 
+    std::string final_path = storePath + "/test_data";
     std::cout << "Enter the Project Gutenberg Book ID (e.g., 84 for Frankenstein): ";
     int bookId;
     std::cin >> bookId;
@@ -108,7 +110,7 @@ void downloadGutenbergBook() {
     }
 
     // Download to a temporary file first
-    std::string temp_file_path = folderPath + "/temp_book_download.txt";
+    std::string temp_file_path = storePath + "/temp_book_download.txt";
     std::string url = "https://www.gutenberg.org/cache/epub/" + std::to_string(bookId) + "/pg" + std::to_string(bookId) + ".txt";
     std::string command = "curl -L -o \"" + temp_file_path + "\" \"" + url + "\"";
 
@@ -132,8 +134,20 @@ void downloadGutenbergBook() {
         final_filename = "pg" + std::to_string(bookId) + ".txt";
     }
 
-    std::string final_filepath = folderPath + "/" + final_filename;
-    
+    std::string final_filepath = storePath + "/" + final_filename;
+
+    std::ifstream file(final_filepath);
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
+
+    content = final_filename + "\n\n" + content;
+
+    std::ofstream outFile(final_filepath);
+    outFile << content;
+    outFile.close();
+
+    remove(temp_file_path.c_str());
+
     // Rename the temporary file to its final name
     if (std::rename(temp_file_path.c_str(), final_filepath.c_str()) != 0) {
         perror("Error renaming file"); // Print system error message
