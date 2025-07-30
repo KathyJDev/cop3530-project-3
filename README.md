@@ -185,7 +185,7 @@ python gui.py
 - If the program still exits instantly and prints nothing, clean your source file(s) of non-breaking spaces.
 
 <<<<<<< HEAD:src/README.md
-README files are formatted using Markdown in GitHub. If you're not familiar with Markdown, or if you need some syntax information, you can find syntax and tips in [Markdown resource file](../resources/MARKDOWN.md). In addition to README files being formatted using Markdown, you can use the same syntax in your commit messages, your issues, and milestones to format any text.
+README files are formatted using Markdown in GitHub. If you're not familiar with Markdown, or if you need some syntax information, you can find syntax and tips in [Markdown resource file](resources/MARKDOWN.md). In addition to README files being formatted using Markdown, you can use the same syntax in your commit messages, your issues, and milestones to format any text.
 =======
 ## 📚 References
 >>>>>>> 4ec166cf3854886a4484e9ba0d7692600713a0f2:README.md
