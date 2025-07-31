@@ -85,19 +85,34 @@ std::string extractTitle(const std::string& filePath) {
 
 // Function to download a book from Project Gutenberg and save it by its title
 void downloadGutenbergBook() {
-    std::cout << "\nEnter the path to the folder where you want to save the book (e.g., data): ";
+    std::cout << "\nEnter the path to a folder that will *contain* 'test_data/' (e.g., 'my_books').\n"
+                 "The 'test_data/' folder will be created inside this path to hold the Gutenberg books.\n"
+                 "Press Enter to use the current directory '.' as the container folder (resulting in 'test_data/', the provided folder): ";
     std::string folderPath;
-    std::cin >> folderPath;
+    std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
 
-    std::string storePath = folderPath+"/test_data";
+    // Use std::getline to read the entire line, allowing for empty input
+    std::getline(std::cin, folderPath);
+
+    // If the input path is empty, default it to the current directory ('.')
+    if (folderPath.empty()) {
+        folderPath = ".";
+    }
+
+    // storePath will be "data/test_data" if folderPath is "data"
+    std::string storePath = folderPath + "/test_data";
 #ifdef _WIN32
-    std::string mkdir_cmd = "mkdir \"" + storePath + "\" > nul 2>&1";
+    std::string mkdir_cmd = "if not exist \"" + storePath + "\" mkdir \"" + storePath + "\" > nul 2>&1";
 #else
     std::string mkdir_cmd = "mkdir -p \"" + storePath + "\"";
 #endif
-    system(mkdir_cmd.c_str());
+    // It's good practice to check the result of system()
+    int mkdir_result = system(mkdir_cmd.c_str());
+    if (mkdir_result != 0) {
+        std::cerr << "Error: Failed to create or access directory '" << storePath << "'. Please check permissions or path.\n";
+        return; // Exit if directory cannot be created/accessed
+    }
 
-    std::string final_path = storePath + "/test_data";
     std::cout << "Enter the Project Gutenberg Book ID (e.g., 84 for Frankenstein): ";
     int bookId;
     std::cin >> bookId;
@@ -108,17 +123,18 @@ void downloadGutenbergBook() {
         std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
         return;
     }
+    std::cin.ignore(); // Consume the newline character left by previous std::cin or other inputs
 
     // Download to a temporary file first
-    std::string temp_file_path = storePath + "/temp_book_download.txt";
+    std::string temp_file_path = storePath + "/temp_book_download.txt"; // e.g., "data/test_data/temp_book_download.txt"
     std::string url = "https://www.gutenberg.org/cache/epub/" + std::to_string(bookId) + "/pg" + std::to_string(bookId) + ".txt";
     std::string command = "curl -L -o \"" + temp_file_path + "\" \"" + url + "\"";
 
-    std::cout << "\nDownloading book " << bookId << "...\n";
+    std::cout << "\nDownloading book " << bookId << " from " << url << "...\n";
     int result = system(command.c_str());
 
     if (result != 0) {
-        std::cout << "\nFailed to download the book. Make sure 'curl' is installed and in your PATH.\n";
+        std::cout << "\nFailed to download the book. Make sure 'curl' is installed and in your PATH, and the Book ID is correct.\n";
         remove(temp_file_path.c_str()); // Clean up temp file on failure
         return;
     }
@@ -134,28 +150,36 @@ void downloadGutenbergBook() {
         final_filename = "pg" + std::to_string(bookId) + ".txt";
     }
 
-    std::string final_filepath = storePath + "/" + final_filename;
+    std::string final_filepath = storePath + "/" + final_filename; // e.g., "data/test_data/Frankenstein.txt"
 
-    std::ifstream file(final_filepath);
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    file.close();
+    // 1. Read content from the TEMPORARY file (this is where the downloaded data is)
+    std::ifstream temp_file_in(temp_file_path);
+    if (!temp_file_in.is_open()) {
+        std::cerr << "Error: Could not open temporary downloaded file for reading: " << temp_file_path << "\n";
+        // Do not remove temp_file_path here, it implies it couldn't even be opened for reading.
+        return;
+    }
+    std::string content((std::istreambuf_iterator<char>(temp_file_in)), std::istreambuf_iterator<char>());
+    temp_file_in.close(); // Close the temp file after reading its content
 
+    // 2. Prepend the filename (title) to the content
     content = final_filename + "\n\n" + content;
 
-    std::ofstream outFile(final_filepath);
-    outFile << content;
-    outFile.close();
+    // 3. Write the modified content to the FINAL destination file
+    std::ofstream final_file_out(final_filepath);
+    if (!final_file_out.is_open()) {
+        std::cerr << "Error: Could not open final destination file for writing: " << final_filepath << "\n";
+        remove(temp_file_path.c_str()); // Clean up temp file since we can't write final
+        return;
+    }
+    final_file_out << content;
+    final_file_out.close(); // Close the final file after writing
 
+    // 4. Clean up the temporary file (no need for std::rename anymore, as content was already written to final_filepath)
     remove(temp_file_path.c_str());
 
-    // Rename the temporary file to its final name
-    if (std::rename(temp_file_path.c_str(), final_filepath.c_str()) != 0) {
-        perror("Error renaming file"); // Print system error message
-        remove(temp_file_path.c_str()); // Try to clean up temp file even if rename fails
-    } else {
-        std::cout << "Successfully downloaded and saved as '" << final_filename << "'.\n"
-                  << "Please re-index your documents (Option 1) to include this new book.\n";
-    }
+    std::cout << "Successfully downloaded and saved as '" << final_filename << "' in '" << storePath << "'.\n"
+              << "Please re-index your documents (Option 1) to include this new book.\n";
 }
 
 // Prints the main menu options to the console.
