@@ -64,8 +64,10 @@ std::vector<Document> loadDocuments(const std::string& dirPath) {
 
     WIN32_FIND_DATAW ffd;
     HANDLE hFind = FindFirstFileW(wpattern.c_str(), &ffd);
-    if (hFind == INVALID_HANDLE_VALUE) return docs; // No files found or error
-
+    if (hFind == INVALID_HANDLE_VALUE) {
+        std::cout << "Directory does not exist or could not be opened: " << dirPath << std::endl;
+        return docs;
+    }
     do {
         // Skip directories, only process files.
         if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
@@ -82,8 +84,11 @@ std::vector<Document> loadDocuments(const std::string& dirPath) {
     FindClose(hFind);
 #else
     DIR* dir = opendir(dirPath.c_str());
-    if (!dir) return docs; // Directory could not be opened
-
+    // Directory could not be opened
+    if (!dir) {
+        std::cout << "Directory does not exist or could not be opened: " << dirPath << std::endl;
+        return docs;
+    }
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         std::string fname(entry->d_name);
