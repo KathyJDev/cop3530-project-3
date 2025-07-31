@@ -83,12 +83,12 @@ In your project root directory, run the appropriate command:
 
 **Windows (using MinGW/MSYS2):**
 ```bash
-g++ -std=c++14 src/main.cpp src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search-engine.exe -lws2_32
+g++ -std=c++14 src/main.cpp src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search_engine.exe -lws2_32
 ```
 
 **Linux / macOS:**
 ```bash
-g++ -std=c++14 src/main.cpp src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search-engine
+g++ -std=c++14 src/main.cpp src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search_engine
 ```
 
 ### 3. Run the Application
@@ -99,15 +99,15 @@ To start the interactive CLI menu:
 
 **Windows Command Prompt / PowerShell**
 ```bash
-search-engine.exe
+search_engine.exe
 ```
 **Windows MSYS2/Git Bash**
 ```bash
-./search-engine.exe
+./search_engine.exe
 ```
 **Linux/macOS**
 ```bash
-./search-engine
+./search_engine
 ```
 
 You’ll see a menu:
