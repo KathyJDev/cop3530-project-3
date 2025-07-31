@@ -17,8 +17,6 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
 
 - **g++** (MinGW-w64 64-bit on Windows, or any recent g++ on Linux/macOS)
 - **C++14** or newer (`-std=c++14`)
-- Header-only libraries:
-  - [`cpp-httplib` (httplib.h)](https://github.com/yhirose/cpp-httplib)
 - [`curl`](https://curl.se/) utility (optional; for raw CLI downloads)
 - **On Windows:** Link with `-lws2_32`
 
@@ -73,9 +71,6 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
     # macOS (usually pre-installed, or via Homebrew)
     brew install curl
     ```
-- **Header-only Libraries (`httplib.h`):**
-  - Download these files directly into your project's root directory:
-    - [httplib.h](https://raw.githubusercontent.com/yhirose/cpp-httplib/master/httplib.h)
 
 **Python GUI Dependencies (Optional):**
 ```bash
@@ -95,8 +90,6 @@ g++ -std=c++14 main.cpp document.cpp tokenizer.cpp inverted_index.cpp suffix_arr
 ```bash
 g++ -std=c++14 main.cpp document.cpp tokenizer.cpp inverted_index.cpp suffix_array.cpp performance.cpp utils.cpp -o search-engine
 ```
-
-> **Note:** Ensure `httplib.h` is present in your project folder (or configure your build system to include them if they are in a dedicated include subdirectory using `-Iinclude`).
 
 ### 3. Run the Application
 
