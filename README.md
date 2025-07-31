@@ -83,12 +83,12 @@ In your project root directory, run the appropriate command:
 
 **Windows (using MinGW/MSYS2):**
 ```bash
-g++ -std=c++14 main.cpp document.cpp tokenizer.cpp inverted_index.cpp suffix_array.cpp performance.cpp utils.cpp -o search-engine.exe -lws2_32
+g++ -std=c++14 src/main.cpp src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search-engine.exe -lws2_32
 ```
 
 **Linux / macOS:**
 ```bash
-g++ -std=c++14 main.cpp document.cpp tokenizer.cpp inverted_index.cpp suffix_array.cpp performance.cpp utils.cpp -o search-engine
+g++ -std=c++14 src/main.cpp src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search-engine
 ```
 
 ### 3. Run the Application
