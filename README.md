@@ -135,7 +135,7 @@ Enter your choice:
 
 Run:
 ```bash
-python gui.py
+python src/gui.py
 ```
 (Follow the GUI’s prompts.)
 ## ⭐ Future Implementations
