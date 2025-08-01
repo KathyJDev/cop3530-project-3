@@ -491,6 +491,19 @@ class SearchWindow(QWidget):
             QApplication.restoreOverrideCursor()
             return
 
+                # 1. Ask user for a container folder, similar to the CLI.
+        #    The dialog will start in the last indexed folder for convenience.
+        container_folder = QFileDialog.getExistingDirectory(
+            self,
+            "Select Folder to Save Book In",
+            self.indexed_folder 
+        )
+
+        # 2. If the user cancels, default to the currently indexed folder.
+        #    Otherwise, update the indexed_folder path to the new selection.
+        if container_folder:
+            self.indexed_folder = container_folder
+
         book = books[idx]
         formats = book.get("formats", {})
         text_url = formats.get("text/plain; charset=utf-8") or formats.get("text/plain")
@@ -588,27 +601,23 @@ class SearchWindow(QWidget):
             QMessageBox.warning(self, "No Text", "Could not download a plain text, HTML, or EPUB version for this book, or text was too short.")
             return
 
-        test_data_dir = os.path.join(self.indexed_folder, "test_data")
-        if not os.path.exists(test_data_dir):
-            try:
-                os.makedirs(test_data_dir)
-            except OSError as e:
-                QApplication.restoreOverrideCursor()
-                QMessageBox.warning(self, "Error", f"Could not find test_data folder")
-                return
+        save_dir = self.indexed_folder 
 
         title = book.get("title", "gutenberg_book").replace(" ", "_")
         invalid_chars = r'[<>:"/\\|?*\x00-\x1f]'
         title = re.sub(invalid_chars, '', title)
         title = title[:60]
         filename = f"{title}_{book_id}.txt"
-        full_path = os.path.join(test_data_dir, filename)
+        
+        # We now join directly with the chosen save directory.
+        full_path = os.path.join(save_dir, filename)
 
-        content = f"Document: {filename} \n\n {content}.txt"
+        content = f"Document: {filename} \n\n {content}"
 
-        if not os.access(test_data_dir, os.W_OK):
+        # Check for write permissions in the chosen directory.
+        if not os.access(save_dir, os.W_OK):
             QApplication.restoreOverrideCursor()
-            QMessageBox.warning(self, "Permissions Error", f"Cannot write to directory '{test_data_dir}'. Please check your folder permissions.")
+            QMessageBox.warning(self, "Permissions Error", f"Cannot write to directory '{save_dir}'. Please check permissions.")
             return
 
         try:
