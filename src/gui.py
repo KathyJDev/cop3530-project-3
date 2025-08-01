@@ -83,7 +83,7 @@ class SearchWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Simple Search Engine with Gutenberg")
-        self.setFixedSize(750, 540)
+        self.setFixedSize(750, 580)
         self.docs_indexed = False
         self.indexed_folder = "."
         self.last_query = ""
@@ -103,7 +103,7 @@ class SearchWindow(QWidget):
         self.setStyleSheet("background-color: #202020; color: white;")
 
         # Load the logo pixmap
-        pixmap = QPixmap("../resources/images/logo.png")
+        pixmap = QPixmap("resources/images/logo.png")
 
         if pixmap.isNull():
             self.logo_label.setText("Search Engine")
@@ -177,7 +177,7 @@ class SearchWindow(QWidget):
             }
         """)
         self.search_icon = QPushButton()
-        self.search_icon.setIcon(QIcon("../resources/images/search.svg"))
+        self.search_icon.setIcon(QIcon("resources/images/search.svg"))
         self.search_icon.setIconSize(QSize(16, 16))
         self.search_icon.setFixedSize(40, 40)
         self.search_icon.setStyleSheet("""
@@ -247,6 +247,16 @@ class SearchWindow(QWidget):
             """)
         layout.addWidget(self.results)
 
+        self.view_full_doc_btn = QPushButton("View Full Document")
+        self.view_full_doc_btn.setEnabled(False) # Disabled by default
+        self.view_full_doc_btn.setFont(QFont("Arial", 10))
+        self.view_full_doc_btn.setStyleSheet("""
+            QPushButton { padding: 6px; border-radius: 4px; background-color: #414141; color: white; font-weight: 500; }
+            QPushButton:hover { background-color: #555555; }
+            QPushButton:disabled { background-color: #252525; color: #666666; }
+        """)
+        layout.addWidget(self.view_full_doc_btn)
+
         self.setLayout(layout)
 
         self.index_btn.clicked.connect(self.index_documents)
@@ -254,6 +264,9 @@ class SearchWindow(QWidget):
         # --- REMOVED: self.lucky_btn.clicked.connect(self.feeling_lucky) ---
         self.online_btn.clicked.connect(self.search_online)
         self.results.itemDoubleClicked.connect(self.show_document)
+
+        self.results.itemSelectionChanged.connect(self.on_selection_changed)
+        self.view_full_doc_btn.clicked.connect(self.view_full_document)
 
     def get_ds_flag(self):
         return "--ds", "suffix" if self.suffix_btn.isChecked() else "inverted"
@@ -420,6 +433,9 @@ class SearchWindow(QWidget):
     def select_book_dialog(self, book_list):
         dialog = QDialog(self)
         dialog.setWindowTitle("Choose a book to download")
+        flags = dialog.windowFlags()
+        flags &= ~Qt.WindowContextHelpButtonHint
+        dialog.setWindowFlags(flags)
         dialog.setFixedSize(self.width(), 400)
 
         layout = QVBoxLayout(dialog)
@@ -783,6 +799,33 @@ class SearchWindow(QWidget):
             return f'<span style="background-color: yellow">{html_escape(match.group(0))}</span>'
         highlighted = re.sub(q, replacer, html_escape(text), flags=re.IGNORECASE)
         return f"<pre style='font-family:monospace'>{highlighted}</pre>"
+    
+    def on_selection_changed(self):
+        self.view_full_doc_btn.setEnabled(len(self.results.selectedItems()) > 0)
+
+    def view_full_document(self):
+        selected_items = self.results.selectedItems()
+        if not selected_items:
+            return
+        
+        row = self.results.row(selected_items[0])
+        doc_id = self.doc_id_map.get(row)
+        
+        if doc_id is not None:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.current_worker = WorkerThread(['./search_engine', '--get-content', str(doc_id), self.indexed_folder])
+            self.current_worker.finished.connect(self.on_get_content_finished)
+            self.current_worker.error.connect(self.on_show_document_error)
+            self.current_worker.start()
+
+    def on_get_content_finished(self, result):
+       QApplication.restoreOverrideCursor()
+       if result.returncode == 0:
+           # Display the content in a new window WITH highlighting
+           self.show_document_content(result.stdout, highlight=True)
+       else:
+           QMessageBox.warning(self, "Error", f"Could not retrieve document content:\n{result.stderr}")
+       self.current_worker = None
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

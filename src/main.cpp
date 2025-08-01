@@ -257,7 +257,7 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-        // --- GUI/Script Integration Mode ---
+            // --- GUI/Script Integration Mode ---
     // Handles command-line arguments for non-interactive operations.
     if (argc >= 2) {
         std::string cmd = argv[1];
@@ -269,7 +269,7 @@ int main(int argc, char* argv[]) {
             if (argc > base + 2 && std::string(argv[base + 1]) == "--ds") ds = argv[base + 2];
         };
 
-        // --- FIXED: --index ---
+        // --- --index ---
         // Builds the indexes and saves them to disk.
         if (cmd == "--index" && argc >= 3) {
             folder = argv[2];
@@ -282,15 +282,15 @@ int main(int argc, char* argv[]) {
 
             SuffixArray saIndex; 
             saIndex.buildIndex(docs);
-            saIndex.save("suffix_array.dat"); // ENABLED: Saves the Suffix Array
+            saIndex.save("suffix_array.dat");
 
             std::cout << "Indexed " << docs.size() << " documents and saved indexes to disk.\n";
             return 0;
         }
 
-        // --- FIXED: --search, --lucky, --snippets ---
+        // --- --search & --snippets ---
         // These now load the pre-built index instead of rebuilding it.
-        else if (cmd == "--search" || cmd == "--lucky" || cmd == "--snippets") {
+        else if (cmd == "--search" || cmd == "--snippets") {
             if (argc < 3) {
                 std::cerr << "Error: Not enough arguments for " << cmd << "\n";
                 return 1;
@@ -304,13 +304,13 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
             SuffixArray saIndex;
-            if (!saIndex.load("suffix_array.dat")) { // ENABLED: Loads the Suffix Array
+            if (!saIndex.load("suffix_array.dat")) {
                 std::cerr << "Error: Suffix Array index file not found. Please run --index first.\n";
                 return 1;
             }
 
             // Load documents only for displaying content, not for indexing
-            if (cmd == "--search" || cmd == "--lucky") {
+            if (cmd == "--search") {
                  parse_folder_ds(3);
                  std::vector<Document> docs = loadDocuments(folder);
                  std::vector<std::string> tokens = tokenize(query);
@@ -330,21 +330,11 @@ int main(int argc, char* argv[]) {
                     }
                 }
                 
-                if (cmd == "--search") {
-                    for (int docId : unique_docIds) {
-                        auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
-                        if (it != docs.end()) {
-                            std::string preview = (it->content.size() > 80) ? it->content.substr(0, 80) + "..." : it->content;
-                            std::cout << "Document " << docId << ": " << preview << "\n";
-                        }
-                    }
-                } else { // --lucky
-                    if (!unique_docIds.empty()) {
-                        int docId = unique_docIds[0];
-                        auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
-                        if (it != docs.end()) {
-                            std::cout << it->content << "\n";
-                        }
+                for (int docId : unique_docIds) {
+                    auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
+                    if (it != docs.end()) {
+                        std::string preview = (it->content.size() > 80) ? it->content.substr(0, 80) + "..." : it->content;
+                        std::cout << "Document " << docId << ": " << preview << "\n";
                     }
                 }
             } else { // --snippets
@@ -365,7 +355,25 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        // --- FIXED: --add-file ---
+        // --- --get-content ---
+        // Retrieves the full content of a single document by its ID.
+        else if (cmd == "--get-content" && argc >= 3) {
+            int docId = std::stoi(argv[2]);
+            if (argc >= 4) folder = argv[3];
+            
+            std::vector<Document> docs = loadDocuments(folder);
+            auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
+
+            if (it != docs.end()) {
+                std::cout << it->content << std::endl;
+                return 0;
+            } else {
+                std::cerr << "Error: Document with ID " << docId << " not found." << std::endl;
+                return 1;
+            }
+        }
+
+        // --- --add-file ---
         // Adds a new file, rebuilds the index, and re-saves it to disk.
         else if (cmd == "--add-file" && argc >= 3) {
             std::string filePath = argv[2];
@@ -389,12 +397,11 @@ int main(int argc, char* argv[]) {
             
             SuffixArray saIndex; 
             saIndex.buildIndex(docs);
-            saIndex.save("suffix_array.dat"); // ENABLED: Re-saves the Suffix Array
+            saIndex.save("suffix_array.dat");
             
             std::cout << "Added and re-indexed file: " << filePath << "\n";
             return 0;
         }
-        // If an unknown command-line argument is provided, fall through to CLI mode.
     }
 
     // --- CLI Mode ---
