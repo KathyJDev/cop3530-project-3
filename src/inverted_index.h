@@ -3,13 +3,16 @@
 
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include "document.h"
+#include "custom_hash_table.h" // Use our custom hash table
 
 // InvertedIndex class builds and manages an inverted index for fast keyword and phrase searches.
 class InvertedIndex {
+private:
     // The index maps each token (word) to a vector of (document ID, token position) pairs.
-    std::unordered_map<std::string, std::vector<std::pair<int, int>>> index;
+    // We now use our custom HashTable instead of std::unordered_map.
+    HashTable<std::string, std::vector<std::pair<int, int>>> index;
+
 public:
     // Build the inverted index from a vector of Document objects.
     void buildIndex(const std::vector<Document>& docs);

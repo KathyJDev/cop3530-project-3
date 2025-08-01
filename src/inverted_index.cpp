@@ -16,14 +16,25 @@ void InvertedIndex::buildIndex(const std::vector<Document>& docs) {
 
 // Search for documents containing a specific keyword (case-insensitive, punctuation removed).
 // Returns a vector of document IDs where the keyword appears.
+// Search for documents containing a specific keyword (UPDATED)
 std::vector<int> InvertedIndex::searchKeyword(const std::string& word) {
     std::string processed = word;
     toLower(processed);
     removePunctuation(processed);
+    
     std::set<int> docIds;
-    if (index.find(processed) != index.end())
-        for (const auto& entry : index[processed])
+
+    // Our custom find() returns a pointer to the value, or nullptr if not found.
+    // So, we check against nullptr instead of index.end().
+    auto* postings = index.find(processed);
+    
+    if (postings != nullptr) { // This is the corrected check
+        // If found, dereference the pointer to loop through the vector of postings.
+        for (const auto& entry : *postings) {
             docIds.insert(entry.first);
+        }
+    }
+    
     return std::vector<int>(docIds.begin(), docIds.end());
 }
 
