@@ -257,146 +257,141 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-    // --- GUI/Script Integration Mode ---
+        // --- GUI/Script Integration Mode ---
     // Handles command-line arguments for non-interactive operations.
     if (argc >= 2) {
         std::string cmd = argv[1];
         std::string folder = "."; // Default folder is current directory
         std::string ds = "inverted"; // Default data structure for search
 
-        // Lambda helper to parse folder path and data structure argument
         auto parse_folder_ds = [&](int base) {
             if (argc > base) folder = argv[base];
             if (argc > base + 2 && std::string(argv[base + 1]) == "--ds") ds = argv[base + 2];
         };
 
-        // Command: --index <folder_path>
+        // --- FIXED: --index ---
+        // Builds the indexes and saves them to disk.
         if (cmd == "--index" && argc >= 3) {
             folder = argv[2];
+            std::cout << "Indexing documents in " << folder << "...\n";
             std::vector<Document> docs = loadDocuments(folder);
-            InvertedIndex invIndex; invIndex.buildIndex(docs);
-            SuffixArray saIndex; saIndex.buildIndex(docs);
-            std::cout << "Indexed " << docs.size() << " documents.\n";
+            
+            InvertedIndex invIndex; 
+            invIndex.buildIndex(docs);
+            invIndex.save("inverted_index.dat");
+
+            SuffixArray saIndex; 
+            saIndex.buildIndex(docs);
+            saIndex.save("suffix_array.dat"); // ENABLED: Saves the Suffix Array
+
+            std::cout << "Indexed " << docs.size() << " documents and saved indexes to disk.\n";
             return 0;
         }
-        // Command: --search <query> [--folder <folder_path>] [--ds <inverted|suffix>]
-        else if (cmd == "--search" && argc >= 3) {
+
+        // --- FIXED: --search, --lucky, --snippets ---
+        // These now load the pre-built index instead of rebuilding it.
+        else if (cmd == "--search" || cmd == "--lucky" || cmd == "--snippets") {
+            if (argc < 3) {
+                std::cerr << "Error: Not enough arguments for " << cmd << "\n";
+                return 1;
+            }
             std::string query = argv[2];
-            parse_folder_ds(3);
-            std::vector<Document> docs = loadDocuments(folder);
-            InvertedIndex invIndex; invIndex.buildIndex(docs);
-            SuffixArray saIndex; saIndex.buildIndex(docs);
-            std::vector<std::string> tokens = tokenize(query);
 
-            std::vector<int> results;
-            if (ds == "suffix") {
-                results = (tokens.size() > 1) ? saIndex.searchPhrase(query) : saIndex.searchKeyword(query);
-            } else { // Default to inverted
-                results = (tokens.size() > 1) ? invIndex.searchPhrase(query) : invIndex.searchKeyword(query);
+            // Load PRE-BUILT indexes from disk
+            InvertedIndex invIndex;
+            if (!invIndex.load("inverted_index.dat")) {
+                std::cerr << "Error: Inverted Index file not found. Please run --index first.\n";
+                return 1;
+            }
+            SuffixArray saIndex;
+            if (!saIndex.load("suffix_array.dat")) { // ENABLED: Loads the Suffix Array
+                std::cerr << "Error: Suffix Array index file not found. Please run --index first.\n";
+                return 1;
             }
 
-            // Deduplicate document IDs while preserving order of first appearance
-            std::vector<int> unique_docIds;
-            std::set<int> seen;
-            for (int docId : results) {
-                if (seen.insert(docId).second) { // If insertion successful, it's a new ID
-                    unique_docIds.push_back(docId);
-                }
-            }
+            // Load documents only for displaying content, not for indexing
+            if (cmd == "--search" || cmd == "--lucky") {
+                 parse_folder_ds(3);
+                 std::vector<Document> docs = loadDocuments(folder);
+                 std::vector<std::string> tokens = tokenize(query);
 
-            // Print document previews for search results
-            for (int docId : unique_docIds) {
-                auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
-                if (it != docs.end()) {
-                    std::string preview = (it->content.size() > 80) ? it->content.substr(0, 80) + "..." : it->content;
-                    std::cout << "Document " << docId << ": " << preview << "\n";
+                 std::vector<int> results;
+                 if (ds == "suffix") {
+                     results = (tokens.size() > 1) ? saIndex.searchPhrase(query) : saIndex.searchKeyword(query);
+                 } else {
+                     results = (tokens.size() > 1) ? invIndex.searchPhrase(query) : invIndex.searchKeyword(query);
+                 }
+                
+                std::vector<int> unique_docIds;
+                std::set<int> seen;
+                for (int docId : results) {
+                    if (seen.insert(docId).second) {
+                        unique_docIds.push_back(docId);
+                    }
                 }
+                
+                if (cmd == "--search") {
+                    for (int docId : unique_docIds) {
+                        auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
+                        if (it != docs.end()) {
+                            std::string preview = (it->content.size() > 80) ? it->content.substr(0, 80) + "..." : it->content;
+                            std::cout << "Document " << docId << ": " << preview << "\n";
+                        }
+                    }
+                } else { // --lucky
+                    if (!unique_docIds.empty()) {
+                        int docId = unique_docIds[0];
+                        auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
+                        if (it != docs.end()) {
+                            std::cout << it->content << "\n";
+                        }
+                    }
+                }
+            } else { // --snippets
+                 if (argc < 4) {
+                     std::cerr << "Error: --snippets requires a document ID.\n";
+                     return 1;
+                 }
+                 int docId = std::stoi(argv[3]);
+                 parse_folder_ds(4);
+                 std::vector<Document> docs = loadDocuments(folder);
+                 auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
+                 if (it != docs.end()) {
+                     printSnippets(it->content, query);
+                 } else {
+                     std::cout << "Document not found.\n";
+                 }
             }
             return 0;
         }
-        // Command: --lucky <query> [--folder <folder_path>] [--ds <inverted|suffix>]
-        else if (cmd == "--lucky" && argc >= 3) {
-            std::string query = argv[2];
-            parse_folder_ds(3);
-            std::vector<Document> docs = loadDocuments(folder);
-            InvertedIndex invIndex; invIndex.buildIndex(docs);
-            SuffixArray saIndex; saIndex.buildIndex(docs);
-            std::vector<std::string> tokens = tokenize(query);
 
-            std::vector<int> results;
-            if (ds == "suffix") {
-                results = (tokens.size() > 1) ? saIndex.searchPhrase(query) : saIndex.searchKeyword(query);
-            } else { // Default to inverted
-                results = (tokens.size() > 1) ? invIndex.searchPhrase(query) : invIndex.searchKeyword(query);
-            }
-
-            // Deduplicate document IDs while preserving order
-            std::vector<int> unique_docIds;
-            std::set<int> seen;
-            for (int docId : results) {
-                if (seen.insert(docId).second) {
-                    unique_docIds.push_back(docId);
-                }
-            }
-
-            // Print the full content of the first found document
-            if (!unique_docIds.empty()) {
-                int docId = unique_docIds[0];
-                auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
-                if (it != docs.end()) {
-                    std::cout << it->content << "\n";
-                }
-            }
-            return 0;
-        }
-        // Command: --add-file <file_path> [--folder <target_folder>]
+        // --- FIXED: --add-file ---
+        // Adds a new file, rebuilds the index, and re-saves it to disk.
         else if (cmd == "--add-file" && argc >= 3) {
             std::string filePath = argv[2];
             if (argc >= 4) folder = argv[3];
+
+            std::vector<Document> docs = loadDocuments(folder);
+            
             std::ifstream in(filePath);
             if (!in) {
                 std::cerr << "Could not open file: " << filePath << "\n";
                 return 1;
             }
             std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-            std::vector<Document> docs = loadDocuments(folder);
-            // Assign a new ID; if docs is empty, start from 1, otherwise increment last ID
+            
             int newId = docs.empty() ? 1 : docs.back().id + 1;
             docs.push_back(Document(newId, content));
-            InvertedIndex invIndex; invIndex.buildIndex(docs); // Rebuild index with new document
-            SuffixArray saIndex; saIndex.buildIndex(docs);     // Rebuild index with new document
-            std::cout << "Added and indexed file: " << filePath << "\n";
-            return 0;
-        }
-        // Command: --snippets <query> <doc_id> [--folder <folder_path>] [--ds <inverted|suffix>]
-        else if (cmd == "--snippets" && argc >= 4) {
-            std::string query = argv[2];
-            int docId = std::stoi(argv[3]); // Convert document ID string to integer
-            parse_folder_ds(4);
-            std::vector<Document> docs = loadDocuments(folder);
-            InvertedIndex invIndex; invIndex.buildIndex(docs);
-            SuffixArray saIndex; saIndex.buildIndex(docs);
-
-            auto it = std::find_if(docs.begin(), docs.end(), [docId](const Document& d){ return d.id == docId; });
-            if (it != docs.end()) {
-                // Use the non-interactive printSnippets for command-line output
-                printSnippets(it->content, query);
-            } else {
-                std::cout << "Document not found.\n";
-            }
-            /*
-        }else if (cmd == "--get-content" && argc >= 4) {
-            int docId = std::stoi(argv[2]);
-            folder = argv[3];
-            std::vector<Document> docs = loadDocuments(folder);
-
-            auto it = std::find_if(docs.begin(),docs.end(), [docId](const Document& d){ return d.id == docId; });
-            if (it != docs.end()) {
-                cout<<it->content<<"\n";
-            }else {
-                return 1;
-            }
-        */
+            
+            InvertedIndex invIndex; 
+            invIndex.buildIndex(docs);
+            invIndex.save("inverted_index.dat");
+            
+            SuffixArray saIndex; 
+            saIndex.buildIndex(docs);
+            saIndex.save("suffix_array.dat"); // ENABLED: Re-saves the Suffix Array
+            
+            std::cout << "Added and re-indexed file: " << filePath << "\n";
             return 0;
         }
         // If an unknown command-line argument is provided, fall through to CLI mode.

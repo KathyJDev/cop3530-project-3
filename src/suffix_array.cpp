@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <fstream>
+#include <cctype>
 using namespace std;
 
 // Builds the suffix array for each document
@@ -65,44 +67,133 @@ vector<int> SuffixArray::searchPhrase(const string& phrase) const {
     return result;
 }
 
+// Helper function to check if a character is a word boundary.
+// A boundary is anything that is NOT a letter or a number.
+bool isBoundary(char c) {
+    return !std::isalnum(static_cast<unsigned char>(c));
+}
+
 // Searches for the keyword/phrase (query) in the suffix array of one document
 // Returns a vector of suffix array indices where the query matches
-vector<int> SuffixArray::searchInDocument(const string& text, const vector<int>& suffixArray, const string& query) const {
+// Searches for the query as a WHOLE WORD in the suffix array of one document
+std::vector<int> SuffixArray::searchInDocument(const std::string& text, const std::vector<int>& suffixArray, const std::string& query) const {
     int left = 0, right = suffixArray.size() - 1;
     int mid;
-    int compare;
-    vector<int> result;
+    int first_match = -1;
+    std::vector<int> result;
 
-    // Binary search for the query
+    // 1. Binary search to find the FIRST occurrence of the query as a prefix
     while (left <= right) {
         mid = left + (right - left) / 2;
-
-        // Compare the suffix at the middle with the query
-        compare = text.compare(suffixArray[mid], query.size(), query);
+        int compare = text.compare(suffixArray[mid], query.size(), query);
         if (compare == 0) {
-            int temp = mid;
-
-            // Find all suffixes that match the query before the middle
-            while (temp >= left && text.compare(suffixArray[temp], query.size(), query) == 0) {
-                result.push_back(suffixArray[temp]);
-                temp--;
-            }
-
-            // Find all suffixes that match the query after the middle
-            temp = mid + 1;
-            while (temp <= right && text.compare(suffixArray[temp], query.size(), query) == 0) {
-                result.push_back(suffixArray[temp]);
-                temp++;
-            }
-
-            break;
+            first_match = mid;
+            right = mid - 1; // Keep looking left to find the very first match
         } else if (compare < 0) {
             left = mid + 1;
         } else {
             right = mid - 1;
         }
     }
+
+    // 2. If a match was found, iterate through all matches and validate them
+    if (first_match != -1) {
+        for (int i = first_match; i < suffixArray.size(); ++i) {
+            // Check if the suffix still starts with the query
+            if (text.compare(suffixArray[i], query.size(), query) != 0) {
+                break; // We've passed all potential matches
+            }
+
+            int match_pos = suffixArray[i];
+
+            // --- BOUNDARY CHECK ---
+            // Check the character BEFORE the match
+            bool left_boundary_ok = (match_pos == 0) || isBoundary(text[match_pos - 1]);
+            
+            // Check the character AFTER the match
+            bool right_boundary_ok = (match_pos + query.size() == text.size()) || isBoundary(text[match_pos + query.size()]);
+
+            if (left_boundary_ok && right_boundary_ok) {
+                result.push_back(match_pos);
+            }
+        }
+    }
     return result;
+}
+
+bool SuffixArray::save(const std::string& filename) const {
+    std::ofstream ofs(filename, std::ios::binary);
+    if (!ofs) {
+        return false; // Failed to open file
+    }
+
+    // 1. Write the number of documents
+    size_t num_docs = text.size();
+    ofs.write(reinterpret_cast<const char*>(&num_docs), sizeof(num_docs));
+
+    // 2. Loop through each document and its suffix array
+    for (size_t i = 0; i < num_docs; ++i) {
+        // --- Save the Document object ---
+        // a. Save the ID
+        ofs.write(reinterpret_cast<const char*>(&text[i].id), sizeof(text[i].id));
+        
+        // b. Save the content string (length-prefixed)
+        size_t content_len = text[i].content.size();
+        ofs.write(reinterpret_cast<const char*>(&content_len), sizeof(content_len));
+        ofs.write(text[i].content.c_str(), content_len);
+
+        // --- Save the corresponding suffix array ---
+        // a. Save the size of the vector
+        size_t sa_size = suffixArray[i].size();
+        ofs.write(reinterpret_cast<const char*>(&sa_size), sizeof(sa_size));
+        
+        // b. Save the vector's raw data
+        ofs.write(reinterpret_cast<const char*>(suffixArray[i].data()), sa_size * sizeof(int));
+    }
+
+    return true;
+}
+
+// Loads the index from a binary file
+bool SuffixArray::load(const std::string& filename) {
+    std::ifstream ifs(filename, std::ios::binary);
+    if (!ifs) {
+        return false; // Failed to open file
+    }
+
+    clear(); // Clear any existing data
+
+    size_t num_docs;
+    ifs.read(reinterpret_cast<char*>(&num_docs), sizeof(num_docs));
+
+    // Pre-allocate memory for efficiency without calling the default constructor
+    text.reserve(num_docs);
+    suffixArray.reserve(num_docs);
+
+    // Loop to read each document and its suffix array one by one
+    for (size_t i = 0; i < num_docs; ++i) {
+        // --- Load Document data into temporary variables ---
+        int current_id;
+        ifs.read(reinterpret_cast<char*>(&current_id), sizeof(current_id));
+
+        size_t content_len;
+        ifs.read(reinterpret_cast<char*>(&content_len), sizeof(content_len));
+        std::string current_content(content_len, '\0');
+        ifs.read(&current_content[0], content_len);
+
+        // --- Construct the Document and add it to the vector ---
+        text.emplace_back(current_id, current_content);
+
+        // --- Load the corresponding suffix array ---
+        size_t sa_size;
+        ifs.read(reinterpret_cast<char*>(&sa_size), sizeof(sa_size));
+        std::vector<int> current_sa(sa_size);
+        ifs.read(reinterpret_cast<char*>(current_sa.data()), sa_size * sizeof(int));
+        
+        suffixArray.push_back(current_sa);
+    }
+
+    return true;
 }
 
 // Clear the suffix array and document text

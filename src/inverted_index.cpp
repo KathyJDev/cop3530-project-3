@@ -1,6 +1,7 @@
 #include "inverted_index.h"
 #include "tokenizer.h"
 #include <algorithm>
+#include <fstream>
 #include <set>
 
 // Build the inverted index from a collection of documents.
@@ -65,6 +66,48 @@ std::vector<int> InvertedIndex::searchPhrase(const std::string& phrase) {
         }
     }
     return results;
+}
+
+bool InvertedIndex::save(const std::string& filename) const {
+    std::ofstream ofs(filename);
+    if (!ofs.is_open()) {
+        return false;
+    }
+
+    // Use the new helper to get all data from the hash table
+    auto all_entries = index.get_all_entries();
+
+    for (const auto& table_entry : all_entries) {
+        const std::string& token = table_entry.key;
+        const auto& postings = table_entry.value;
+        
+        ofs << token << " " << postings.size();
+        for (const auto& pos_pair : postings) {
+            ofs << " " << pos_pair.first << " " << pos_pair.second;
+        }
+        ofs << "\n";
+    }
+    return true;
+}
+
+bool InvertedIndex::load(const std::string& filename) {
+    std::ifstream ifs(filename);
+    if (!ifs.is_open()) {
+        return false;
+    }
+
+    clear(); // Clear any existing index data
+    std::string token;
+    size_t postings_count;
+
+    while (ifs >> token >> postings_count) {
+        std::vector<std::pair<int, int>> postings(postings_count);
+        for (size_t i = 0; i < postings_count; ++i) {
+            ifs >> postings[i].first >> postings[i].second;
+        }
+        index[token] = postings;
+    }
+    return true;
 }
 
 // Clear the inverted index.

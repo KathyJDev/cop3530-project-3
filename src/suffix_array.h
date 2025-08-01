@@ -14,6 +14,8 @@ public:
     void buildIndex(const vector<Document>& docs);
     vector<int> searchKeyword(const string& keyword) const;
     vector<int> searchPhrase(const string& phrase) const;
+    bool save(const std::string& filename) const;
+    bool load(const std::string& filename);
     void clear();
 };
 

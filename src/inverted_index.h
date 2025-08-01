@@ -27,6 +27,9 @@ public:
 
     // Clear the inverted index.
     void clear();
+
+    bool save(const std::string& filename) const;
+    bool load(const std::string& filename);
 };
 
 #endif // INVERTED_INDEX_H
