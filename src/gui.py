@@ -96,16 +96,26 @@ class SearchWindow(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
 
-        # Load logo image if available, otherwise display title text
+         # Load logo image if available, otherwise display title text
         self.logo_label = QLabel()
-        pixmap = QPixmap("logo.png")
+
+        # Apply general window styling regardless of logo presence
+        self.setStyleSheet("background-color: #202020; color: white;")
+
+        # Load the logo pixmap
+        pixmap = QPixmap("../resources/images/logo.png")
+
         if pixmap.isNull():
             self.logo_label.setText("Search Engine")
-            self.setStyleSheet("background-color: #202020; color: white;")
+            # These styles are specifically for when text is displayed
             self.logo_label.setFont(QFont("Arial", 24))
             self.logo_label.setStyleSheet("font-weight: 600;")
         else:
             self.logo_label.setPixmap(pixmap.scaled(200, 70, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            # If you want any specific styling for the label when it displays an image
+            # (e.g., margins, borders), you'd add it here or outside this block
+            # For a pixmap, font settings won't apply to the image itself.
+
         self.logo_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.logo_label)
 
@@ -167,7 +177,7 @@ class SearchWindow(QWidget):
             }
         """)
         self.search_icon = QPushButton()
-        self.search_icon.setIcon(QIcon("resources/images/search.svg"))
+        self.search_icon.setIcon(QIcon("../resources/images/search.svg"))
         self.search_icon.setIconSize(QSize(16, 16))
         self.search_icon.setFixedSize(40, 40)
         self.search_icon.setStyleSheet("""
@@ -551,6 +561,7 @@ class SearchWindow(QWidget):
                     continue
 
         if content is None and epub_url and epub:
+            tmpf_name = None
             try:
                 import tempfile
                 epub_response = requests.get(epub_url)
@@ -558,11 +569,19 @@ class SearchWindow(QWidget):
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmpf:
                     tmpf.write(epub_response.content)
                     tmpf.flush()
+                    tmpf_name = tmpf.name # Store the name for deletion
                 txt = self.extract_epub(tmpf.name)
                 if txt and len(txt) > 1000:
                     content = txt
             except Exception:
                 content = None
+            finally:
+                # IMPORTANT: Ensure the temporary file is deleted even if an error occurred
+                if tmpf_name and os.path.exists(tmpf_name):
+                    try:
+                        os.remove(tmpf_name)
+                    except OSError as remove_e:
+                        print(f"Warning: Could not delete temporary EPUB file {tmpf_name}: {remove_e}")
 
         if not content or len(content.strip()) < 1000:
             QApplication.restoreOverrideCursor()

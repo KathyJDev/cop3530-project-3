@@ -1,6 +1,6 @@
 #include <catch2/catch_all.hpp>
 #include <iostream>
-#include "suffix_array.h"
+#include "../suffix_array.h"
 
 using namespace std;
 
