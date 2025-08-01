@@ -1,4 +1,7 @@
 # Simple Search Engine – Project 3
+<p align="center">
+  <img src="resources/images/logo.png" alt="Project Logo" width="200" height="200">
+</p>
 
 A fast and extensible search engine for local documents and Project Gutenberg books, featuring **inverted index** and **suffix array** search, a C++ backend, and an optional PyQt5 GUI.
 
