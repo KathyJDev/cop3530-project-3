@@ -25,7 +25,7 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
 - [Python 3.7+](https://www.python.org/)
 - [PyQt5](https://pypi.org/project/PyQt5/)
 - [requests](https://pypi.org/project/requests/)
-- ([Optional] For PDF, docx, epub support: `PyPDF2`, `python-docx`, `ebooklib`, `beautifulsoup4`)
+- For PDF, docx, epub support, and for GUI to work the best: `PyPDF2`, `python-docx`, `ebooklib`, `beautifulsoup4`)
 
 ## 📁 Directory Layout
 
