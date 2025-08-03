@@ -9,6 +9,7 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
 
 - **Core Search Engine Functionality (CLI & GUI):**
   - Index local `.txt` documents for **keyword** or **phrase** search.
+    > **Note:** Re-index everytime a book is downloaded just to avoid any possible issues with the program reading a new file
   - Choose between **Inverted Index** or **Suffix Array** for query processing.
   - Benchmark search speed and indexing time for both data structures.
   - Download public domain books directly from [Project Gutenberg](https://gutenberg.org) by Book ID and integrate them into the local index.
