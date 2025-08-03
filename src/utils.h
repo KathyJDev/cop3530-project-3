@@ -17,4 +17,8 @@ std::string highlightKeyword(const std::string& text, const std::string& keyword
 // Shows all snippets (scrollable) for each occurrence of keyword/phrase in content
 void showAllSnippets(const std::string& content, const std::string& keyword, int snippetLength = 80);
 
+// Prints all non-interactive snippets of the query in the content.
+// Used for command-line argument mode where interactive scrolling is not desired.
+void printSnippets(const std::string& content, const std::string& query, int context = 40);
+
 #endif

@@ -199,3 +199,27 @@ void showAllSnippets(const std::string& content, const std::string& keyword, int
         // Any other key is ignored
     }
 }
+
+// Prints all non-interactive snippets of the query in the content.
+// Used for command-line argument mode where interactive scrolling is not desired.
+void printSnippets(const std::string& content, const std::string& query, int context) {
+    std::string lower_content = content;
+    std::string lower_query = query;
+    std::transform(lower_content.begin(), lower_content.end(), lower_content.begin(), ::tolower);
+    std::transform(lower_query.begin(), lower_query.end(), lower_query.begin(), ::tolower);
+
+    size_t pos = 0;
+    bool found = false;
+    while ((pos = lower_content.find(lower_query, pos)) != std::string::npos) {
+        found = true;
+        int start = static_cast<int>(pos) - context;
+        int end = static_cast<int>(pos) + static_cast<int>(query.size()) + context;
+        if (start < 0) start = 0;
+        if (end > (int)content.size()) end = (int)content.size();
+        std::cout << "..." << content.substr(start, end - start) << "...\n";
+        pos += query.size();
+    }
+    if (!found) {
+        std::cout << "No snippets found.\n";
+    }
+}
