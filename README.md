@@ -86,12 +86,12 @@ In your project root directory, run the appropriate command:
 
 **Windows (using MinGW/MSYS2):**
 ```bash
-g++ -std=c++14 src/main.cpp src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search_engine.exe -lws2_32
+g++ -std=c++14 src/main.cpp src/menu.cpp src/gutenberg.cpp  src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search_engine.exe -lws2_32
 ```
 
 **Linux / macOS:**
 ```bash
-g++ -std=c++14 src/main.cpp src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search_engine
+g++ -std=c++14 src/main.cpp src/menu.cpp src/gutenberg.cpp  src/document.cpp src/tokenizer.cpp src/inverted_index.cpp src/suffix_array.cpp src/performance.cpp src/utils.cpp -o search_engine
 ```
 
 > **Note:** A exe should be provided in the project root directory, this is in case it doesn't work
