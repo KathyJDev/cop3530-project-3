@@ -7,12 +7,27 @@ A fast and extensible search engine for local documents and Project Gutenberg bo
 
 ## 🚀 Features
 
-- Index local `.txt` documents for **keyword** or **phrase** search
-- Choose Inverted Index or Suffix Array for query processing
-- Benchmark search speed
-- Download and index books from [Project Gutenberg](https://gutenberg.org) (via title or author)
-- GUI (PyQt5) and Command-Line Interface
-- Cross-platform C++ backend (Windows & Linux/macOS supported)
+- **Core Search Engine Functionality (CLI & GUI):**
+  - Index local `.txt` documents for **keyword** or **phrase** search.
+  - Choose between **Inverted Index** or **Suffix Array** for query processing.
+  - Benchmark search speed and indexing time for both data structures.
+  - Download public domain books directly from [Project Gutenberg](https://gutenberg.org) by Book ID and integrate them into the local index.
+  - Cross-platform C++ backend (Windows & Linux/macOS supported) ensures efficient processing.
+
+- **Command-Line Interface (CLI) Specific Features:**
+  - Interactive menu-driven operation for indexing, searching, and performance reporting.
+  - Direct file path input for local document indexing.
+  - Manual input for Project Gutenberg Book IDs for direct download and indexing.
+  - Displays raw document snippets and full content (with highlighting) directly in the terminal.
+
+- **Python Graphical User Interface (GUI) Specific Features:**
+  - User-friendly visual interface for all search engine operations.
+  - Intuitive buttons and input fields for indexing, searching, and online book downloads.
+  - Automated conversion of common document types (`.pdf`, `.docx`, `.epub`, `.html`) to plain text for indexing.
+  - Visual display of search results in a scrollable list.
+  - Dedicated "View Full Document" button and double-click functionality to open a text viewer for documents.
+  - Live highlighting of search terms within displayed document content or snippets.
+  - Interactive dialogs for book selection during Project Gutenberg searches. 
 
 ## 🛠️ Requirements
 
