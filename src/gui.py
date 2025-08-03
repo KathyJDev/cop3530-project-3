@@ -470,6 +470,16 @@ class SearchWindow(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    
+    # Apply a global stylesheet for all tooltips
+    app.setStyleSheet("""
+        QToolTip {
+            background-color: #2a2a2a;
+            color: white;
+            border: 1px solid #414141;
+        }
+    """)
+
     window = SearchWindow()
     window.show()
     sys.exit(app.exec_())
